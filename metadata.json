@@ -1,0 +1,5 @@
+{
+  "name": "Test Plan Tracker",
+  "description": "A web application to track and evaluate test plans for different workflows. Users can update the status of each test step and view a summary of the progress.",
+  "requestFramePermissions": []
+}
