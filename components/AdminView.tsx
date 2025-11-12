@@ -106,12 +106,12 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
             <div>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-3xl font-bold tracking-tight text-white">Administration</h2>
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors">
                         Admin schließen
                     </button>
                 </div>
 
-                <div className="bg-slate-800 rounded-2xl shadow-2xl ring-1 ring-white/10 p-6 md:p-8 space-y-8">
+                <div className="bg-gray-900 rounded-2xl shadow-2xl ring-1 ring-gray-800 p-6 md:p-8 space-y-8">
                     
                     <div>
                         <h3 className="text-xl font-semibold text-white mb-4">Datenverwaltung</h3>
@@ -123,16 +123,16 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
                                 accept=".json,application/json"
                                 className="hidden"
                             />
-                            <button onClick={handleImportClick} className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">
+                            <button onClick={handleImportClick} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors">
                                 Importieren & Ersetzen
                             </button>
-                            <button onClick={onExportAll} className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">
+                            <button onClick={onExportAll} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors">
                                 Alle exportieren
                             </button>
                         </div>
                     </div>
                     
-                    <hr className="border-slate-700" />
+                    <hr className="border-gray-700" />
 
                     <div>
                         <h3 className="text-xl font-semibold text-white mb-4">Neuen Testpfad hinzufügen</h3>
@@ -142,31 +142,31 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
                                 value={newPathTitle}
                                 onChange={(e) => setNewPathTitle(e.target.value)}
                                 placeholder="Titel für neuen Pfad eingeben..."
-                                className="flex-grow p-2 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-400 text-slate-200"
+                                className="flex-grow p-2 bg-gray-800 border border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-200"
                             />
-                            <button type="submit" className="px-4 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500 disabled:opacity-50" disabled={!newPathTitle.trim()}>
+                            <button type="submit" className="px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!newPathTitle.trim()}>
                                 Pfad hinzufügen
                             </button>
                         </form>
                     </div>
 
-                    <hr className="my-8 border-slate-700" />
+                    <hr className="my-8 border-gray-700" />
 
                     <div>
                         <h3 className="text-xl font-semibold text-white mb-4">Bestehende Pfade verwalten</h3>
                         <div className="space-y-3">
                             {testPaths.map(path => (
-                                <div key={path.id} className="bg-slate-900/50 p-4 rounded-lg flex items-center justify-between">
+                                <div key={path.id} className="bg-gray-800/50 p-4 rounded-lg flex items-center justify-between">
                                     <input
                                         type="text"
                                         value={editingPathTitle[path.id] ?? path.title}
                                         onChange={(e) => handleTitleChange(path.id, e.target.value)}
                                         onBlur={() => handleTitleBlur(path)}
                                         onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                                        className="bg-transparent font-medium text-slate-200 focus:outline-none focus:bg-slate-700 rounded p-1 -m-1"
+                                        className="bg-transparent font-medium text-gray-200 focus:outline-none focus:bg-gray-700 rounded p-1 -m-1"
                                     />
                                     <div className="flex items-center space-x-2">
-                                        <button onClick={() => setEditingPath(path)} className="px-3 py-1.5 text-sm font-medium text-slate-300 bg-slate-700 rounded-md hover:bg-slate-600">
+                                        <button onClick={() => setEditingPath(path)} className="px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600">
                                             Punkte bearbeiten ({path.items.length})
                                         </button>
                                         <button onClick={() => onDeletePath(path.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-full">
@@ -177,7 +177,7 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
                                     </div>
                                 </div>
                             ))}
-                             {testPaths.length === 0 && <p className="text-slate-400 text-center py-4">Es wurden noch keine Testpfade erstellt.</p>}
+                             {testPaths.length === 0 && <p className="text-gray-400 text-center py-4">Es wurden noch keine Testpfade erstellt.</p>}
                         </div>
                     </div>
                 </div>

@@ -11,7 +11,7 @@ export interface TestItem {
   description: string;
   status: TestStatus;
   comment?: string;
-  commentImage?: string;
+  commentImages?: string[];
 }
 
 export interface TestPath {
@@ -31,7 +31,7 @@ export const isTestItem = (item: any): item is TestItem => {
         typeof item.status === 'string' &&
         Object.values(TestStatus).includes(item.status as TestStatus) &&
         (item.comment === undefined || item.comment === null || typeof item.comment === 'string') &&
-        (item.commentImage === undefined || item.commentImage === null || typeof item.commentImage === 'string');
+        (item.commentImages === undefined || item.commentImages === null || (Array.isArray(item.commentImages) && item.commentImages.every(img => typeof img === 'string')));
 };
 
 export const isTestPath = (obj: any): obj is TestPath => {

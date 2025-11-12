@@ -10,8 +10,8 @@ interface TestPlanViewProps {
 
 const TestPlanView: React.FC<TestPlanViewProps> = ({ items, onStatusChange, onOpenCommentModal }) => {
   return (
-    <div className="border border-slate-700 rounded-lg">
-      <div className="divide-y divide-slate-700">
+    <div className="border border-gray-700 rounded-lg">
+      <div className="divide-y divide-gray-700">
         {items.map((item, index) => (
           <TestItemRow
             key={item.id}

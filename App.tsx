@@ -59,7 +59,7 @@ const App: React.FC = () => {
           // If the status is reset to 'Not Started', also clear the comment and image.
           if (newStatus === TestStatus.NOT_STARTED) {
             updatedItem.comment = undefined;
-            updatedItem.commentImage = undefined;
+            updatedItem.commentImages = undefined;
           }
           return updatedItem;
         }
@@ -81,12 +81,12 @@ const App: React.FC = () => {
     setEditingCommentItem(null);
   }, []);
 
-  const handleSaveComment = useCallback((itemId: number, comment: string, commentImage: string | null) => {
+  const handleSaveComment = useCallback((itemId: number, comment: string, commentImages: string[]) => {
     setTestPaths(prevPaths => {
       const newPaths = [...prevPaths];
       const path_to_update = { ...newPaths[activePathIndex] };
       path_to_update.items = path_to_update.items.map(item =>
-        item.id === itemId ? { ...item, comment, commentImage } : item
+        item.id === itemId ? { ...item, comment, commentImages } : item
       );
       newPaths[activePathIndex] = path_to_update;
       return newPaths;
@@ -495,21 +495,21 @@ const App: React.FC = () => {
         };
         
         const overallChartLabelsWithCount = [`${TestStatus.PASSED} (${overallSummary.passed})`, `${TestStatus.FAILED} (${overallSummary.failed})`, `${TestStatus.IN_PROGRESS} (${overallSummary.inProgress})`, `${TestStatus.NOT_STARTED} (${overallSummary.notStarted})`];
-        const overallChartConfig = { type: 'doughnut', data: { labels: overallChartLabelsWithCount, datasets: [{ data: [overallSummary.passed, overallSummary.failed, overallSummary.inProgress, overallSummary.notStarted], backgroundColor: ['#4ade80', '#f87171', '#60a5fa', '#94a3b8'], borderColor: '#1e293b', borderWidth: 4 }] }, options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', padding: 20, boxWidth: 12 } } } } };
+        const overallChartConfig = { type: 'doughnut', data: { labels: overallChartLabelsWithCount, datasets: [{ data: [overallSummary.passed, overallSummary.failed, overallSummary.inProgress, overallSummary.notStarted], backgroundColor: ['#22c55e', '#ef4444', '#3b82f6', '#6b7280'], borderColor: '#111827', borderWidth: 4 }] }, options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#d1d5db', padding: 20, boxWidth: 12 } } } } };
         const overallChartImg = await renderChartToImage(overallChartConfig, 350, 350);
 
         const getStatusBadgeHtml = (status: TestStatus) => {
             let styles = '';
             switch (status) {
-                case TestStatus.PASSED: styles = 'bg-green-500/20 text-green-300'; break;
-                case TestStatus.FAILED: styles = 'bg-red-500/20 text-red-300'; break;
-                case TestStatus.IN_PROGRESS: styles = 'bg-blue-500/20 text-blue-300'; break;
-                default: styles = 'bg-slate-500/20 text-slate-300'; break;
+                case TestStatus.PASSED: styles = 'background-color: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);'; break;
+                case TestStatus.FAILED: styles = 'background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);'; break;
+                case TestStatus.IN_PROGRESS: styles = 'background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);'; break;
+                default: styles = 'background-color: rgba(107, 114, 128, 0.1); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.3);'; break;
             }
-            return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles} flex-shrink-0">${status}</span>`;
+            return `<span style="display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; ${styles}">${status}</span>`;
         };
 
-        const htmlContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Test-Vergleichsbericht</title><script src="https://cdn.tailwindcss.com"></script><style>body{background-color:#0f172a;color:#cbd5e1;font-family:sans-serif;}</style></head><body><main class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto"><h1 class="text-3xl font-bold text-white mb-6 text-center">Test-Vergleichsbericht</h1><div class="mt-8"><h3 class="text-xl font-semibold text-white mb-4 border-b border-slate-700 pb-3">Detaillierte Testberichte</h3><div class="space-y-6 mt-4">${comparisonReports.map(report => `<div class="bg-slate-900/50 rounded-lg border border-white/10 p-4"><h4 class="font-semibold text-slate-100">${report.title}</h4><p class="text-sm text-slate-400">Von: ${report.testerName||'N/A'}</p><div class="mt-4 divide-y divide-slate-700">${report.items.map((item,index) => `<div class="py-2 flex justify-between items-start gap-4"><div class="flex items-start"><div class="w-8 text-slate-400 flex-shrink-0">${index+1}.</div><div class="flex-grow"><p class="text-slate-200">${item.description}</p>${item.comment?`<p class="text-sm text-cyan-300/80 italic mt-1">"${item.comment}"</p>`:''}${item.commentImage?`<img src="${item.commentImage}" alt="Anhang" class="max-w-xs mt-2 rounded border border-slate-600"/>`:''}</div></div>${getStatusBadgeHtml(item.status)}</div>`).join('')}</div></div>`).join('')}</div></div></main></body></html>`;
+        const htmlContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Test-Vergleichsbericht</title><style>body{background-color:#111827;color:#d1d5db;font-family:sans-serif;} main{padding:2rem; max-width:1280px; margin:auto;} h1{font-size:1.875rem;font-weight:700;color:white;margin-bottom:1.5rem;text-align:center;} h3{font-size:1.25rem;font-weight:600;color:white;margin-bottom:1rem;border-bottom:1px solid #374151;padding-bottom:0.75rem;} .report-card{background-color:#1f2937;border-radius:0.5rem;border:1px solid #374151;padding:1rem;margin-top:1rem;} .report-card h4{font-weight:600;color:#f9fafb;} .report-card p{font-size:0.875rem;color:#9ca3af;} .item-row{padding:0.5rem 0;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;} .item-desc{color:#e5e7eb;} .item-comment{font-size:0.875rem;color:#2dd4bf;font-style:italic;margin-top:0.25rem;} .item-image-container{display:flex;gap:0.5rem;margin-top:0.5rem;} .item-image{max-width:200px;max-height:100px;border-radius:0.25rem;border:1px solid #4b5563;}</style></head><body><main><h1>Test-Vergleichsbericht</h1><div><h3>Detaillierte Testberichte</h3><div style="margin-top:1rem; display:grid; gap:1.5rem;">${comparisonReports.map(report => `<div class="report-card"><h4>${report.title}</h4><p>Von: ${report.testerName||'N/A'}</p><div style="margin-top:1rem; border-top: 1px solid #374151;">${report.items.map((item,index) => `<div class="item-row" style="border-bottom: 1px solid #374151;"><div style="flex-grow:1;"><p class="item-desc"><span style="color:#6b7280;margin-right:0.5rem;">${index+1}.</span>${item.description}</p>${item.comment?`<p class="item-comment">"${item.comment}"</p>`:''}${item.commentImages && item.commentImages.length > 0 ? `<div class="item-image-container">${item.commentImages.map(img => `<img src="${img}" alt="Anhang" class="item-image"/>`).join('')}</div>` : ''}</div>${getStatusBadgeHtml(item.status)}</div>`).join('')}</div></div>`).join('')}</div></div></main></body></html>`;
 
         const blob = new Blob([htmlContent], { type: 'text/html' });
         const link = document.createElement('a');
@@ -624,7 +624,7 @@ const App: React.FC = () => {
     }
     return (
       <main className="p-4 sm:p-6 md:p-8">
-        <div className="bg-slate-800 rounded-2xl shadow-2xl shadow-indigo-500/10 ring-1 ring-white/10">
+        <div className="bg-gray-900 rounded-2xl shadow-2xl shadow-blue-600/10 ring-1 ring-gray-800">
           <div className="p-6 md:p-8">
             <TestPathSelector
               paths={testPaths.map(p => p.title)}
@@ -650,7 +650,7 @@ const App: React.FC = () => {
               {!activePath && testPaths.length === 0 && (
                 <div className="text-center py-12">
                   <h3 className="text-xl font-medium text-white">Keine Testpläne verfügbar</h3>
-                  <p className="text-slate-400 mt-2">Wechseln Sie in den Admin-Modus, um einen neuen Testplan zu erstellen.</p>
+                  <p className="text-gray-400 mt-2">Wechseln Sie in den Admin-Modus, um einen neuen Testplan zu erstellen.</p>
                 </div>
               )}
             </div>
@@ -661,7 +661,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans text-slate-300">
+    <div className="min-h-screen font-sans text-gray-300">
       <Header 
         onToggleAdmin={handleToggleAdminMode} 
         isAdminMode={isAdminMode} 
@@ -679,8 +679,8 @@ const App: React.FC = () => {
         onExportXLSX={handleExportXLSX}
       />
       {renderContent()}
-      <footer className="text-center p-4 text-slate-400 text-sm">
-        <p>Testplan-Tracker &copy; 2024. Erstellt mit React & Tailwind CSS.</p>
+      <footer className="text-center p-4 text-gray-400 text-sm">
+        <p>Testplan-Tracker &copy; 2025 Werner Pallentin</p>
       </footer>
 
       {editingCommentItem && (

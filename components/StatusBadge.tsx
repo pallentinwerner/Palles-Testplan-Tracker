@@ -9,14 +9,14 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const getStatusStyles = () => {
     switch (status) {
       case TestStatus.PASSED:
-        return 'bg-green-500/20 text-green-300 ring-green-500/30';
+        return 'bg-green-500/10 text-green-400 ring-green-500/30';
       case TestStatus.FAILED:
-        return 'bg-red-500/20 text-red-300 ring-red-500/30';
+        return 'bg-red-500/10 text-red-400 ring-red-500/30';
       case TestStatus.IN_PROGRESS:
-        return 'bg-blue-500/20 text-blue-300 ring-blue-500/30';
+        return 'bg-blue-500/10 text-blue-400 ring-blue-500/30';
       case TestStatus.NOT_STARTED:
       default:
-        return 'bg-slate-500/20 text-slate-300 ring-slate-500/30';
+        return 'bg-gray-500/10 text-gray-400 ring-gray-500/30';
     }
   };
 

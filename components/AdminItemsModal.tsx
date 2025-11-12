@@ -106,11 +106,11 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
 
   return (
     <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={handleBackdropClick}
     >
-      <div ref={modalRef} className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-slate-700">
+      <div ref={modalRef} className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-gray-700">
           <h2 className="text-xl font-bold text-white">Punkte für "{path.title}" bearbeiten</h2>
         </div>
         
@@ -124,7 +124,7 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                         key={item.id} 
                         className={`
                             p-1 flex items-center space-x-2 rounded-lg transition-all duration-200 relative
-                            ${isDragging ? 'opacity-30 bg-slate-700' : 'bg-transparent'}
+                            ${isDragging ? 'opacity-30 bg-gray-700' : 'bg-transparent'}
                         `}
                         draggable
                         onDragStart={(e) => handleDragStart(e, item.id)}
@@ -132,8 +132,8 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                         onDrop={(e) => handleDrop(e, item.id)}
                         onDragEnd={handleDragEnd}
                     >
-                        {isDragOver && <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-400 rounded-full" />}
-                        <div className="p-2 cursor-move text-slate-500 hover:text-slate-200" title="Ziehen zum Neuanordnen">
+                        {isDragOver && <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />}
+                        <div className="p-2 cursor-move text-gray-500 hover:text-gray-200" title="Ziehen zum Neuanordnen">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                             </svg>
@@ -142,7 +142,7 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                             type="text"
                             value={item.description}
                             onChange={(e) => handleUpdateItemDesc(item.id, e.target.value)}
-                            className="flex-grow p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-400 text-slate-200"
+                            className="flex-grow p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-200"
                         />
                         <button onClick={() => handleDeleteItem(item.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -152,7 +152,7 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                     </div>
                 )
             })}
-            {items.length === 0 && <p className="text-slate-400 text-center py-4">Dieser Testpfad hat keine Punkte.</p>}
+            {items.length === 0 && <p className="text-gray-400 text-center py-4">Dieser Testpfad hat keine Punkte.</p>}
              <div className="flex items-center space-x-2 pt-4">
                 <input
                     type="text"
@@ -160,24 +160,24 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                     onChange={(e) => setNewItemDesc(e.target.value)}
                     placeholder="Beschreibung für neuen Punkt..."
                     onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleAddItem(); } }}
-                    className="flex-grow p-2 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-400 text-slate-200"
+                    className="flex-grow p-2 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-200"
                 />
-                <button onClick={handleAddItem} className="px-4 py-2 font-medium text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-500" disabled={!newItemDesc.trim()}>
+                <button onClick={handleAddItem} className="px-4 py-2 font-medium text-sm text-white bg-blue-600 rounded-md hover:bg-blue-500" disabled={!newItemDesc.trim()}>
                     Punkt hinzufügen
                 </button>
             </div>
         </div>
 
-        <div className="bg-slate-800/50 border-t border-slate-700 px-6 py-4 flex justify-end items-center space-x-3">
+        <div className="bg-gray-800/50 border-t border-gray-700 px-6 py-4 flex justify-end items-center space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-300 bg-transparent border border-slate-600 rounded-md hover:bg-slate-700"
+            className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600"
           >
             Abbrechen
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-500"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-500"
           >
             Änderungen speichern
           </button>

@@ -21,33 +21,36 @@ declare global {
 // --- Report Detail Modal Component ---
 const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onViewImage: (src: string) => void; }> = ({ report, onClose, onViewImage }) => {
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-slate-700">
+        <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-gray-700">
                     <h2 className="text-xl font-bold text-white">Details für "{report.title}"</h2>
-                    <p className="text-sm text-slate-400">Getestet von: {report.testerName || 'N/A'}</p>
+                    <p className="text-sm text-gray-400">Getestet von: {report.testerName || 'N/A'}</p>
                 </div>
                 <div className="p-6 overflow-y-auto">
-                    <div className="divide-y divide-slate-700">
+                    <div className="divide-y divide-gray-700">
                         {report.items.map((item, index) => (
                             <div key={item.id} className="py-3 flex justify-between items-start">
                                 <div className="flex items-start">
-                                    <div className="flex-shrink-0 w-8 text-sm font-medium text-slate-400 text-right mr-4">{index + 1}.</div>
+                                    <div className="flex-shrink-0 w-8 text-sm font-medium text-gray-400 text-right mr-4">{index + 1}.</div>
                                     <div className="flex-1">
-                                        <p className="text-slate-200">{item.description}</p>
+                                        <p className="text-gray-200">{item.description}</p>
                                         {item.comment && (
                                             <p className="text-xs text-cyan-300/80 mt-1 pl-2 border-l-2 border-cyan-500/50 italic">
                                                 {item.comment}
                                             </p>
                                         )}
-                                        {item.commentImage && (
-                                            <div className="mt-2">
-                                                <img 
-                                                  src={item.commentImage} 
-                                                  alt="Kommentar Anhang" 
-                                                  className="max-w-xs max-h-48 rounded-lg border border-slate-600 cursor-pointer hover:border-indigo-400 transition" 
-                                                  onClick={() => onViewImage(item.commentImage!)}
-                                                />
+                                        {item.commentImages && item.commentImages.length > 0 && (
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {item.commentImages.map((imgSrc, imgIndex) => (
+                                                    <img
+                                                      key={imgIndex}
+                                                      src={imgSrc}
+                                                      alt={`Kommentar Anhang ${imgIndex + 1}`}
+                                                      className="max-w-xs max-h-48 rounded-lg border border-gray-600 cursor-pointer hover:border-blue-500 transition"
+                                                      onClick={() => onViewImage(imgSrc)}
+                                                    />
+                                                ))}
                                             </div>
                                         )}
                                     </div>
@@ -57,8 +60,8 @@ const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onVie
                         ))}
                     </div>
                 </div>
-                <div className="bg-slate-800/50 border-t border-slate-700 px-6 py-4 flex justify-end">
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500">
+                <div className="bg-gray-800/50 border-t border-gray-700 px-6 py-4 flex justify-end">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-500">
                         Schließen
                     </button>
                 </div>
@@ -100,32 +103,32 @@ const ReportCard: React.FC<{ report: TestPath; onViewDetails: () => void; onSele
         <div 
             onClick={onSelect}
             title="Zum Vergleich auswählen/abwählen"
-            className={`bg-slate-900/50 rounded-lg border border-white/10 p-4 flex flex-col justify-between transition-all duration-300 hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-1 relative cursor-pointer ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}
+            className={`bg-gray-800 rounded-lg border border-gray-700 p-4 flex flex-col justify-between transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1 relative cursor-pointer ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
         >
             <div className="absolute top-2 right-2 z-10">
                 <input 
                     type="checkbox"
                     checked={isSelected}
                     readOnly
-                    className="h-5 w-5 rounded bg-slate-700 border-slate-500 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
+                    className="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-600 focus:ring-blue-500 pointer-events-none"
                 />
             </div>
             
             <div>
-                <h3 className="font-semibold text-slate-100 truncate">{report.title}</h3>
-                <p className="text-sm text-slate-400">Von: {report.testerName || 'N/A'}</p>
-                <p className="text-xs text-slate-500">{report.exportTimestamp ? new Date(report.exportTimestamp).toLocaleString('de-DE') : 'Kein Datum'}</p>
+                <h3 className="font-semibold text-gray-100 truncate">{report.title}</h3>
+                <p className="text-sm text-gray-400">Von: {report.testerName || 'N/A'}</p>
+                <p className="text-xs text-gray-500">{report.exportTimestamp ? new Date(report.exportTimestamp).toLocaleString('de-DE') : 'Kein Datum'}</p>
                 
-                <div className="w-full bg-slate-700 rounded-full h-2 my-3">
-                    <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${summary.completion}%` }}></div>
+                <div className="w-full bg-gray-700 rounded-full h-2 my-3">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${summary.completion}%` }}></div>
                 </div>
                 <div className="flex justify-between text-sm">
                     <span className="text-green-400">Bestanden: {summary.passed}</span>
                     <span className="text-red-400">Fehlgeschlagen: {summary.failed}</span>
-                    <span className="text-slate-300">Gesamt: {summary.total}</span>
+                    <span className="text-gray-300">Gesamt: {summary.total}</span>
                 </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); onViewDetails(); }} className="mt-4 w-full text-center px-3 py-1.5 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors relative z-10">
+            <button onClick={(e) => { e.stopPropagation(); onViewDetails(); }} className="mt-4 w-full text-center px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors relative z-10">
                 Details ansehen
             </button>
         </div>
@@ -134,10 +137,10 @@ const ReportCard: React.FC<{ report: TestPath; onViewDetails: () => void; onSele
 
 
 const commonTooltipOptions = {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    titleColor: '#e2e8f0',
-    bodyColor: '#cbd5e1',
-    borderColor: '#4f46e5',
+    backgroundColor: 'rgba(17, 24, 39, 0.85)',
+    titleColor: '#e5e7eb',
+    bodyColor: '#d1d5db',
+    borderColor: '#3b82f6',
     borderWidth: 1,
     padding: 10,
     cornerRadius: 4,
@@ -146,7 +149,7 @@ const commonTooltipOptions = {
 
 // --- Chart Components for Dark Theme ---
 const ChartContainer: React.FC<{ title: string; children: React.ReactNode; className?: string }> = ({ title, children, className }) => (
-    <div className={`bg-slate-900/50 p-4 rounded-lg border border-white/10 flex flex-col ${className}`}>
+    <div className={`bg-gray-800 p-4 rounded-lg border border-gray-700 flex flex-col ${className}`}>
         <h4 className="text-lg font-semibold text-white mb-3 text-center">{title}</h4>
         <div className="relative flex-grow">
           {children}
@@ -164,9 +167,9 @@ const OverallStatusChart: React.FC<{ data: any }> = ({ data }) => {
                 labels: ['Bestanden', 'Fehlgeschlagen', 'In Bearbeitung', 'Nicht begonnen'],
                 datasets: [{
                     data: [data.passed, data.failed, data.inProgress, data.notStarted],
-                    backgroundColor: ['#4ade80', '#f87171', '#60a5fa', '#94a3b8'],
-                    hoverBackgroundColor: ['#6ee7b7', '#fda4af', '#93c5fd', '#cbd5e1'],
-                    borderColor: '#1e293b',
+                    backgroundColor: ['#22c55e', '#ef4444', '#3b82f6', '#6b7280'],
+                    hoverBackgroundColor: ['#4ade80', '#f87171', '#60a5fa', '#9ca3af'],
+                    borderColor: '#1f2937',
                     borderWidth: 4,
                 }]
             },
@@ -177,7 +180,7 @@ const OverallStatusChart: React.FC<{ data: any }> = ({ data }) => {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { color: '#cbd5e1', padding: 20, boxWidth: 12 }
+                        labels: { color: '#9ca3af', padding: 20, boxWidth: 12 }
                     },
                     tooltip: commonTooltipOptions,
                 }
@@ -200,17 +203,17 @@ const PerformanceComparisonChart: React.FC<{ data: any }> = ({ data }) => {
                     {
                         label: 'Bestanden',
                         data: data.passedData,
-                        backgroundColor: '#22c55e50',
+                        backgroundColor: 'rgba(34, 197, 94, 0.5)',
                         borderColor: '#22c55e',
-                        hoverBackgroundColor: '#22c55e80',
+                        hoverBackgroundColor: 'rgba(34, 197, 94, 0.75)',
                         borderWidth: 1
                     },
                     {
                         label: 'Fehlgeschlagen',
                         data: data.failedData,
-                        backgroundColor: '#ef444450',
+                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
                         borderColor: '#ef4444',
-                        hoverBackgroundColor: '#ef444480',
+                        hoverBackgroundColor: 'rgba(239, 68, 68, 0.75)',
                         borderWidth: 1
                     }
                 ]
@@ -219,11 +222,11 @@ const PerformanceComparisonChart: React.FC<{ data: any }> = ({ data }) => {
                 responsive: true,
                 aspectRatio: 3,
                 scales: {
-                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#33415580' } },
-                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#33415580' } }
+                    x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                    y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
                 },
                 plugins: {
-                    legend: { labels: { color: '#cbd5e1' } },
+                    legend: { labels: { color: '#9ca3af' } },
                     tooltip: commonTooltipOptions,
                 }
             }
@@ -244,28 +247,12 @@ const TopFailuresChart: React.FC<{ data: any }> = ({ data }) => {
                 datasets: [{
                     label: 'Fehleranzahl',
                     data: data.counts,
-                    backgroundColor: (context: any) => {
-                        const chart = context.chart;
-                        const { ctx, chartArea } = chart;
-                        if (!chartArea) return null;
-                        const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-                        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
-                        gradient.addColorStop(1, 'rgba(239, 68, 68, 0.3)');
-                        return gradient;
-                    },
+                    backgroundColor: 'rgba(239, 68, 68, 0.6)',
                     borderColor: '#ef4444',
-                    hoverBackgroundColor: (context: any) => {
-                        const chart = context.chart;
-                        const { ctx, chartArea } = chart;
-                        if (!chartArea) return null;
-                        const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-                        gradient.addColorStop(0, 'rgba(248, 113, 113, 0.9)');
-                        gradient.addColorStop(1, 'rgba(248, 113, 113, 0.4)');
-                        return gradient;
-                    },
+                    hoverBackgroundColor: 'rgba(239, 68, 68, 0.8)',
                     hoverBorderColor: '#f87171',
                     borderWidth: 1,
-                    borderRadius: 6,
+                    borderRadius: 4,
                     borderSkipped: false,
                 }]
             },
@@ -275,11 +262,11 @@ const TopFailuresChart: React.FC<{ data: any }> = ({ data }) => {
                 maintainAspectRatio: false,
                 scales: {
                     x: { 
-                        ticks: { color: '#94a3b8', stepSize: 1, precision: 0 }, 
-                        grid: { color: '#33415540' } 
+                        ticks: { color: '#9ca3af', stepSize: 1, precision: 0 }, 
+                        grid: { color: '#374151' } 
                     },
                     y: { 
-                        ticks: { color: '#cbd5e1' }, 
+                        ticks: { color: '#d1d5db' }, 
                         grid: { display: false } 
                     }
                 },
@@ -329,33 +316,33 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
         {/* The main header has been removed from this component */}
 
         {/* --- Overall Summary --- */}
-        <div className="bg-slate-800 rounded-2xl shadow-2xl ring-1 ring-white/10 p-6 md:p-8 mb-8">
-            <div className="border-b border-slate-700 pb-3 mb-4">
+        <div className="bg-gray-900 rounded-2xl shadow-2xl ring-1 ring-gray-800 p-6 md:p-8 mb-8">
+            <div className="border-b border-gray-700 pb-3 mb-4">
                 <h3 className="text-xl font-semibold text-white">Gesamtübersicht</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div className="p-2 rounded-md">
                     <div className="text-3xl font-bold text-green-400">{overallSummary.passed}</div>
-                    <div className="text-sm text-slate-400">Bestanden</div>
+                    <div className="text-sm text-gray-400">Bestanden</div>
                 </div>
                 <div className="p-2 rounded-md">
                     <div className="text-3xl font-bold text-red-400">{overallSummary.failed}</div>
-                    <div className="text-sm text-slate-400">Fehlgeschlagen</div>
+                    <div className="text-sm text-gray-400">Fehlgeschlagen</div>
                 </div>
                 <div className="p-2 rounded-md">
                     <div className="text-3xl font-bold text-blue-400">{overallSummary.inProgress}</div>
-                    <div className="text-sm text-slate-400">In Bearbeitung</div>
+                    <div className="text-sm text-gray-400">In Bearbeitung</div>
                 </div>
                 <div className="p-2 rounded-md">
-                    <div className="text-3xl font-bold text-slate-400">{overallSummary.notStarted}</div>
-                    <div className="text-sm text-slate-400">Nicht begonnen</div>
+                    <div className="text-3xl font-bold text-gray-400">{overallSummary.notStarted}</div>
+                    <div className="text-sm text-gray-400">Nicht begonnen</div>
                 </div>
             </div>
         </div>
 
         {/* --- Visual Analysis --- */}
-        <div className="bg-slate-800 rounded-2xl shadow-2xl ring-1 ring-white/10 p-6 md:p-8 mb-8">
-            <div className="border-b border-slate-700 pb-3 mb-4">
+        <div className="bg-gray-900 rounded-2xl shadow-2xl ring-1 ring-gray-800 p-6 md:p-8 mb-8">
+            <div className="border-b border-gray-700 pb-3 mb-4">
                 <h3 className="text-xl font-semibold text-white">Visuelle Analyse</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
@@ -382,7 +369,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
         {/* --- Aggregated & Imported Reports Section --- */}
         <div className="space-y-8">
             <div>
-                <div className="border-b border-slate-700 pb-3 mb-4">
+                <div className="border-b border-gray-700 pb-3 mb-4">
                     <h3 className="text-xl font-semibold text-white">Aggregierte Testpfad-Analyse</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -399,8 +386,8 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
             </div>
         
             <div>
-                 <div className="border-b border-slate-700 pb-3 mb-4">
-                    <h3 className="text-xl font-semibold text-white">Einzelne Berichte (${reports.length})</h3>
+                 <div className="border-b border-gray-700 pb-3 mb-4">
+                    <h3 className="text-xl font-semibold text-white">Einzelne Berichte ({reports.length})</h3>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {reports.map((report, index) => (

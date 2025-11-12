@@ -20,13 +20,13 @@ const AggregatedReportCard: React.FC<AggregatedReportCardProps> = ({ title, test
     }, [items]);
 
     return (
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-indigo-500/30 p-4 ring-2 ring-indigo-500/20 shadow-lg transition-all duration-300 hover:shadow-indigo-500/20 hover:border-indigo-500/60 hover:-translate-y-1 flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg border border-blue-600/30 p-4 ring-2 ring-blue-600/20 shadow-lg transition-all duration-300 hover:shadow-blue-500/20 hover:border-blue-600/60 hover:-translate-y-1 flex flex-col justify-between">
             <div>
-                <h3 className="font-semibold text-indigo-300 truncate">{title}</h3>
-                <p className="text-sm text-slate-400 mb-3">{testerCount} {testerCount > 1 ? 'Tester' : 'Tester'}</p>
+                <h3 className="font-semibold text-blue-400 truncate">{title}</h3>
+                <p className="text-sm text-gray-400 mb-3">{testerCount} {testerCount > 1 ? 'Tester' : 'Tester'}</p>
                 
                 {/* Visual Status Bar */}
-                <div className="w-full bg-slate-700 rounded-full h-2.5 my-3 flex overflow-hidden">
+                <div className="w-full bg-gray-600 rounded-full h-2.5 my-3 flex overflow-hidden">
                     <div className="bg-green-500 h-2.5 transition-all duration-500 ease-in-out" style={{ width: `${summary.passedPercent}%` }} title={`Bestanden: ${summary.passed}`}></div>
                     <div className="bg-red-500 h-2.5 transition-all duration-500 ease-in-out" style={{ width: `${summary.failedPercent}%` }} title={`Fehlgeschlagen: ${summary.failed}`}></div>
                 </div>
@@ -35,12 +35,12 @@ const AggregatedReportCard: React.FC<AggregatedReportCardProps> = ({ title, test
                 <div className="flex justify-between text-sm mt-2">
                     <span className="text-green-400">Bestanden: {summary.passed}</span>
                     <span className="text-red-400">Fehlgeschlagen: {summary.failed}</span>
-                    <span className="text-slate-300">Gesamt: {summary.total}</span>
+                    <span className="text-gray-300">Gesamt: {summary.total}</span>
                 </div>
             </div>
 
             {/* Details Button */}
-            <button onClick={onViewDetails} className="mt-4 w-full text-center px-3 py-1.5 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">
+            <button onClick={onViewDetails} className="mt-4 w-full text-center px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors">
                 Details ansehen
             </button>
         </div>

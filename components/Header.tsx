@@ -41,11 +41,11 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-slate-900/70 backdrop-blur-md border-b border-white/10 shadow-lg sticky top-0 z-40">
+    <header className="bg-gray-900/80 backdrop-blur-md border-b border-gray-700 shadow-lg sticky top-0 z-40">
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 <h1 className="text-2xl font-bold text-white tracking-wider">
@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({
                         {selectedForDiff.length >= 2 && (
                           <button
                             onClick={onStartDiffing}
-                            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 transition-colors animate-pulse"
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors animate-pulse"
                             >
                             Vergleichen ({selectedForDiff.length})
                           </button>
@@ -67,20 +67,20 @@ const Header: React.FC<HeaderProps> = ({
                             <button 
                                 onClick={() => setShowExportDropdown(!showExportDropdown)}
                                 disabled={isExporting}
-                                className="inline-flex items-center justify-center w-36 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors disabled:opacity-50"
+                                className="inline-flex items-center justify-center w-36 px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors disabled:opacity-50"
                             >
                                 {isExporting ? 'Exportiere...' : 'Exportieren'}
                                 <svg className={`w-4 h-4 ml-2 transition-transform ${showExportDropdown ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             {showExportDropdown && (
-                                <div className="absolute right-0 mt-2 w-48 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-20">
-                                    <button onClick={onExportPDF} className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-600">Als PDF exportieren</button>
-                                    <button onClick={onExportHTML} className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-600">Als HTML exportieren</button>
-                                    <button onClick={onExportXLSX} className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-600">Nach Excel exportieren</button>
+                                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-20">
+                                    <button onClick={onExportPDF} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Als PDF exportieren</button>
+                                    <button onClick={onExportHTML} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Als HTML exportieren</button>
+                                    <button onClick={onExportXLSX} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Nach Excel exportieren</button>
                                 </div>
                             )}
                          </div>
-                        <button onClick={onCloseComparison} className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">
+                        <button onClick={onCloseComparison} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 transition-colors">
                             Schließen
                         </button>
                     </>
@@ -97,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({
                         <button
                             onClick={handleComparisonClick}
                             title="Berichte vergleichen"
-                            className="p-2 rounded-full transition-colors duration-200 text-slate-400 hover:bg-slate-700 hover:text-white"
+                            className="p-2 rounded-full transition-colors duration-200 text-gray-400 hover:bg-gray-700 hover:text-white"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -111,8 +111,8 @@ const Header: React.FC<HeaderProps> = ({
                     title="Admin-Modus umschalten"
                     className={`p-2 rounded-full transition-colors duration-200 ${
                         isAdminMode 
-                            ? 'bg-indigo-600 text-white'
-                            : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                     }`}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
