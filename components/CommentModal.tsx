@@ -44,7 +44,10 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-        const filePromises = Array.from(files).map(file => {
+        // FIX: Explicitly type the 'file' parameter as 'File' to resolve type inference issues.
+        // This ensures that properties like 'type' are accessible and that the 'file' object
+        // can be correctly passed to functions expecting a Blob, like FileReader.readAsDataURL.
+        const filePromises = Array.from(files).map((file: File) => {
             return new Promise<string>((resolve, reject) => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();

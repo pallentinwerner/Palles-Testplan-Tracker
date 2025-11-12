@@ -1,6 +1,7 @@
 
+
 import React, { useState, useRef } from 'react';
-import { TestPath, TestItem, isTestPathArray, TestStatus } from '../types';
+import { TestPath, TestItem, isTestPath, isTestPathArray, TestStatus, migrateImportedData } from '../types';
 import AdminItemsModal from './AdminItemsModal';
 
 interface AdminViewProps {
@@ -62,35 +63,24 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
             try {
                 const result = e.target?.result as string;
                 const parsed = JSON.parse(result);
+                
+                // Use centralized migration logic
+                const migratedData = migrateImportedData(parsed);
 
-                // --- START: Data Migration Logic ---
-                const statusMap: { [key: string]: TestStatus } = {
-                  'Not Started': TestStatus.NOT_STARTED,
-                  'In Progress': TestStatus.IN_PROGRESS,
-                  'Passed': TestStatus.PASSED,
-                  'Failed': TestStatus.FAILED,
-                };
-    
-                const migrateReport = (report: any): any => {
-                  if (!report || !Array.isArray(report.items)) return report;
-                  const migratedItems = report.items.map((item: any) => {
-                    if (item && typeof item.status === 'string' && statusMap[item.status]) {
-                      return { ...item, status: statusMap[item.status] };
-                    }
-                    return item;
-                  });
-                  return { ...report, items: migratedItems };
-                };
-    
-                const migratedData = Array.isArray(parsed) ? parsed.map(migrateReport) : parsed;
-                // --- END: Data Migration Logic ---
+                let pathsToImport: TestPath[] | null = null;
 
                 if (isTestPathArray(migratedData)) {
+                    pathsToImport = migratedData;
+                } else if (isTestPath(migratedData)) {
+                    pathsToImport = [migratedData];
+                }
+
+                if (pathsToImport) {
                     if (window.confirm('Sind Sie sicher, dass Sie alle aktuellen Testpläne ersetzen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-                        onImportAndReplace(migratedData);
+                        onImportAndReplace(pathsToImport);
                     }
                 } else {
-                    alert('Ungültiges Dateiformat. Bitte importieren Sie eine gültige JSON-Datei mit einem Testplan-Array.');
+                    alert('Ungültiges Dateiformat. Bitte importieren Sie eine gültige JSON-Datei mit einem Testplan-Objekt oder einem Array von Testplänen.');
                 }
             } catch (error) {
                 alert(`Fehler beim Parsen der Datei: ${error}`);

@@ -309,6 +309,19 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
   const [selectedReport, setSelectedReport] = useState<TestPath | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingAggregatedReport, setViewingAggregatedReport] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState('');
+
+  const filteredReports = useMemo(() => {
+    if (!filterText) {
+        return reports;
+    }
+    const lowercasedFilter = filterText.toLowerCase();
+    return reports.filter(report =>
+        report.title.toLowerCase().includes(lowercasedFilter) ||
+        (report.testerName && report.testerName.toLowerCase().includes(lowercasedFilter))
+    );
+  }, [reports, filterText]);
+
 
   return (
     <main className="p-4 sm:p-6 md:p-8">
@@ -386,11 +399,25 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
             </div>
         
             <div>
-                 <div className="border-b border-gray-700 pb-3 mb-4">
-                    <h3 className="text-xl font-semibold text-white">Einzelne Berichte ({reports.length})</h3>
+                 <div className="border-b border-gray-700 pb-3 mb-4 flex justify-between items-center flex-wrap gap-4">
+                    <h3 className="text-xl font-semibold text-white">Einzelne Berichte ({filteredReports.length})</h3>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Filtern nach Titel oder Tester..."
+                            value={filterText}
+                            onChange={(e) => setFilterText(e.target.value)}
+                            className="w-full sm:w-64 pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-200 placeholder-gray-400"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {reports.map((report, index) => (
+                    {filteredReports.map((report, index) => (
                         <ReportCard 
                             key={`${report.title}-${report.testerName}-${index}`} 
                             report={report} 
@@ -400,6 +427,11 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
                         />
                     ))}
                 </div>
+                 {filteredReports.length === 0 && (
+                    <div className="text-center py-12 text-gray-400">
+                        <p>Keine Berichte entsprechen Ihrem Filter.</p>
+                    </div>
+                )}
             </div>
         </div>
       </div>

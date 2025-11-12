@@ -1,7 +1,8 @@
 
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { TEST_PATHS } from './constants';
-import { TestStatus, TestPath, TestItem, isTestPath, isTestPathArray } from './types';
+import { TestStatus, TestPath, TestItem, isTestPath, isTestPathArray, migrateImportedData } from './types';
 import Header from './components/Header';
 import TestPathSelector from './components/TestPathSelector';
 import SummaryView from './components/SummaryView';
@@ -133,27 +134,8 @@ const App: React.FC = () => {
             const result = e.target?.result as string;
             const parsed = JSON.parse(result);
             
-            // --- START: Data Migration Logic ---
-            const statusMap: { [key: string]: TestStatus } = {
-              'Not Started': TestStatus.NOT_STARTED,
-              'In Progress': TestStatus.IN_PROGRESS,
-              'Passed': TestStatus.PASSED,
-              'Failed': TestStatus.FAILED,
-            };
-
-            const migrateReport = (report: any): any => {
-              if (!report || !Array.isArray(report.items)) return report;
-              const migratedItems = report.items.map((item: any) => {
-                if (item && typeof item.status === 'string' && statusMap[item.status]) {
-                  return { ...item, status: statusMap[item.status] };
-                }
-                return item;
-              });
-              return { ...report, items: migratedItems };
-            };
-            
-            const migratedData = Array.isArray(parsed) ? parsed.map(migrateReport) : migrateReport(parsed);
-            // --- END: Data Migration Logic ---
+            // Use centralized migration logic
+            const migratedData = migrateImportedData(parsed);
 
             const extractTesterName = (filename: string): string | undefined => {
                 const match = filename.match(/-tester-(.*?)(?:\.json|$)/i);
