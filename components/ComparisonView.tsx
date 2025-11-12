@@ -20,6 +20,19 @@ declare global {
 
 // --- Report Detail Modal Component ---
 const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onViewImage: (src: string) => void; }> = ({ report, onClose, onViewImage }) => {
+    const [copiedCommentId, setCopiedCommentId] = useState<number | null>(null);
+
+    const handleCopyComment = (commentText: string, itemId: number) => {
+        if (!commentText) return;
+        navigator.clipboard.writeText(commentText).then(() => {
+            setCopiedCommentId(itemId);
+            setTimeout(() => setCopiedCommentId(null), 2000);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            alert('Kopieren fehlgeschlagen!');
+        });
+    };
+    
     return (
         <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
@@ -36,9 +49,26 @@ const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onVie
                                     <div className="flex-1">
                                         <p className="text-gray-200">{item.description}</p>
                                         {item.comment && (
-                                            <p className="text-xs text-cyan-300/80 mt-1 pl-2 border-l-2 border-cyan-500/50 italic">
-                                                {item.comment}
-                                            </p>
+                                            <div className="group relative mt-1">
+                                                <p className="text-xs text-cyan-300/80 pl-2 border-l-2 border-cyan-500/50 italic pr-8">
+                                                    {item.comment}
+                                                </p>
+                                                <button
+                                                    onClick={() => handleCopyComment(item.comment as string, item.id)}
+                                                    title="Kommentar kopieren"
+                                                    className="absolute -top-1 right-0 p-1 text-gray-400 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-gray-700"
+                                                >
+                                                    {copiedCommentId === item.id ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            </div>
                                         )}
                                         {item.commentImages && item.commentImages.length > 0 && (
                                             <div className="mt-2 flex flex-wrap gap-2">
