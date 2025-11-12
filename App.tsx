@@ -12,6 +12,18 @@ import AdminView from './components/AdminView';
 import ComparisonView from './components/ComparisonView';
 import AssignTesterNameModal from './components/AssignTesterNameModal';
 
+// Make TypeScript aware of the globals from CDNs
+declare var Chart: any;
+declare var XLSX: any;
+
+// Fix: Correctly type the jsPDF library attached to the window object.
+declare global {
+    interface Window {
+        jspdf: any;
+    }
+}
+
+
 interface PendingAssignment {
   report: TestPath;
   filename: string;
@@ -27,6 +39,13 @@ const App: React.FC = () => {
   const [isComparisonMode, setIsComparisonMode] = useState<boolean>(false);
   const [comparisonReports, setComparisonReports] = useState<TestPath[]>([]);
   const [pendingNameAssignment, setPendingNameAssignment] = useState<PendingAssignment[]>([]);
+  
+  // --- State lifted from ComparisonView ---
+  const [selectedForDiff, setSelectedForDiff] = useState<TestPath[]>([]);
+  const [isDiffing, setIsDiffing] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
 
   const activePath = useMemo(() => testPaths[activePathIndex], [testPaths, activePathIndex]);
 
@@ -276,7 +295,256 @@ const App: React.FC = () => {
   const handleCloseComparison = () => {
     setIsComparisonMode(false);
     setComparisonReports([]);
+    setSelectedForDiff([]);
+    setIsDiffing(false);
   };
+
+  // --- Comparison handlers ---
+  const handleSelectForDiff = useCallback((reportToToggle: TestPath) => {
+    setSelectedForDiff(prev => 
+        prev.some(r => r === reportToToggle)
+            ? prev.filter(r => r !== reportToToggle) 
+            : [...prev, reportToToggle]
+    );
+  }, []);
+
+  // --- Memos lifted from ComparisonView ---
+  const aggregatedReports = useMemo(() => {
+    const reportGroups: { [title: string]: { items: TestItem[], testers: Set<string> } } = {};
+    comparisonReports.forEach(report => {
+        if (!reportGroups[report.title]) {
+            reportGroups[report.title] = { items: [], testers: new Set() };
+        }
+        reportGroups[report.title].items.push(...report.items);
+        if (report.testerName) {
+            reportGroups[report.title].testers.add(report.testerName);
+        }
+    });
+    return Object.entries(reportGroups).map(([title, data]) => ({
+        title,
+        testerCount: data.testers.size,
+        items: data.items,
+    })).sort((a,b) => a.title.localeCompare(b.title));
+  }, [comparisonReports]);
+
+  const overallSummary = useMemo(() => {
+    const allItems = comparisonReports.flatMap(r => r.items);
+    if (allItems.length === 0) return { passed: 0, failed: 0, inProgress: 0, notStarted: 0, total: 0 };
+    const passed = allItems.filter(item => item.status === TestStatus.PASSED).length;
+    const failed = allItems.filter(item => item.status === TestStatus.FAILED).length;
+    const inProgress = allItems.filter(item => item.status === TestStatus.IN_PROGRESS).length;
+    const notStarted = allItems.filter(item => item.status === TestStatus.NOT_STARTED).length;
+    return { passed, failed, inProgress, notStarted, total: allItems.length };
+  }, [comparisonReports]);
+
+  const performanceChartData = useMemo(() => {
+    const labels = comparisonReports.map(r => `${r.title} (${r.testerName || 'N/A'})`);
+    const passedData = comparisonReports.map(r => r.items.filter(i => i.status === TestStatus.PASSED).length);
+    const failedData = comparisonReports.map(r => r.items.filter(i => i.status === TestStatus.FAILED).length);
+    return { labels, passedData, failedData };
+  }, [comparisonReports]);
+
+  const topFailuresData = useMemo(() => {
+      const failureCounts: { [key: string]: number } = {};
+      comparisonReports.flatMap(r => r.items)
+          .filter(item => item.status === TestStatus.FAILED)
+          .forEach(item => {
+              failureCounts[item.description] = (failureCounts[item.description] || 0) + 1;
+          });
+      const sortedFailures = Object.entries(failureCounts).sort(([, a], [, b]) => b - a).slice(0, 5);
+      return {
+          labels: sortedFailures.map(([desc]) => desc),
+          counts: sortedFailures.map(([, count]) => count),
+      };
+  }, [comparisonReports]);
+  
+  // --- Export handlers lifted from ComparisonView ---
+  const handleExportPDF = useCallback(async () => {
+        if (isExporting) return;
+        setIsExporting(true);
+        setShowExportDropdown(false);
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+    
+            const MARGIN = 40;
+            const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+            const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+            const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+            let y = MARGIN;
+            let pageCount = 1;
+    
+            const sanitizeForPdf = (text: string | null | undefined): string => {
+                if (!text) return '';
+                const replacements: { [key: string]: string } = { '…': '...', '‘': "'", '’': "'", '“': '"', '”': '"', '–': '-', '—': '-', '•': '*', '\u00A0': ' ' };
+                let sanitized = text.replace(/[…‘’“”––•\u00A0]/g, char => replacements[char] || char);
+                return sanitized.replace(/[^ -~äöüÄÖÜß\n\r]/g, '');
+            };
+    
+            const addPage = () => {
+                doc.addPage();
+                pageCount++;
+                y = MARGIN;
+            };
+    
+            const checkPageBreak = (heightNeeded: number) => {
+                if (y + heightNeeded > PAGE_HEIGHT - MARGIN) {
+                    addPage();
+                }
+            };
+    
+            const renderChartToImage = async (chartConfig: any, width: number, height: number): Promise<string> => {
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = width;
+                offscreenCanvas.height = height;
+                const chart = new Chart(offscreenCanvas, { ...chartConfig, options: { ...chartConfig.options, animation: false, responsive: false, devicePixelRatio: 2 } });
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for render
+                const dataUrl = offscreenCanvas.toDataURL('image/png', 1.0);
+                chart.destroy();
+                return dataUrl;
+            };
+    
+            const lightThemeColors = { text: '#333333', heading: '#000000', subHeading: '#555555', green: '#28a745', red: '#dc3545', blue: '#007bff', gray: '#6c757d' };
+    
+            doc.setFontSize(24).setTextColor(lightThemeColors.heading).setFont('helvetica', 'bold');
+            doc.text('Test-Vergleichsbericht', PAGE_WIDTH / 2, y, { align: 'center' });
+            y += 40;
+    
+            const lightChartOptions = (textColor: string, gridColor: string) => ({
+                plugins: { legend: { labels: { color: textColor, boxWidth: 10, padding: 10 }, position: 'right' } },
+                scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } }
+            });
+    
+            const overallChartImg = await renderChartToImage({
+                type: 'doughnut',
+                data: { labels: ['Bestanden', 'Fehlgeschlagen', 'In Bearbeitung', 'Nicht begonnen'], datasets: [{ data: [overallSummary.passed, overallSummary.failed, overallSummary.inProgress, overallSummary.notStarted], backgroundColor: [lightThemeColors.green, lightThemeColors.red, lightThemeColors.blue, lightThemeColors.gray], borderColor: '#fff', borderWidth: 2 }] },
+                options: { ...lightChartOptions(lightThemeColors.text, '#e9ecef'), cutout: '70%' }
+            }, 600, 300);
+            
+            doc.setFontSize(14).setFont('helvetica', 'bold').setTextColor(lightThemeColors.heading);
+            doc.text('Visuelle Analyse', MARGIN, y);
+            y += 20;
+            doc.addImage(overallChartImg, 'PNG', MARGIN, y, CONTENT_WIDTH, CONTENT_WIDTH / 2);
+            y += (CONTENT_WIDTH / 2) + 20;
+    
+            addPage();
+            doc.setFontSize(18).setFont('helvetica', 'bold').setTextColor(lightThemeColors.heading);
+            doc.text('Detaillierte Testberichte', MARGIN, y);
+            y += 25;
+    
+            for (const report of comparisonReports) {
+                const reportHeader = `${report.title} (Tester: ${report.testerName || 'N/A'})`;
+                checkPageBreak(40);
+                doc.setFontSize(14).setFont('helvetica', 'bold').setTextColor(lightThemeColors.heading);
+                doc.text(sanitizeForPdf(reportHeader), MARGIN, y);
+                y += 20;
+    
+                for (const item of report.items) {
+                    checkPageBreak(15);
+                    const statusColors: { [key: string]: string } = { [TestStatus.PASSED]: lightThemeColors.green, [TestStatus.FAILED]: lightThemeColors.red, [TestStatus.IN_PROGRESS]: lightThemeColors.blue, [TestStatus.NOT_STARTED]: lightThemeColors.gray };
+                    doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(statusColors[item.status] || lightThemeColors.text);
+                    doc.text(`[${item.status}]`, MARGIN, y, { charSpace: 0.5 });
+                    
+                    doc.setFont('helvetica', 'normal').setTextColor(lightThemeColors.text);
+                    const descLines = doc.splitTextToSize(sanitizeForPdf(item.description), CONTENT_WIDTH - 80);
+                    doc.text(descLines, MARGIN + 80, y);
+                    y += descLines.length * 12;
+
+                    if (item.comment) {
+                        checkPageBreak(12);
+                        doc.setFont('helvetica', 'italic').setTextColor(lightThemeColors.subHeading);
+                        const commentLines = doc.splitTextToSize(sanitizeForPdf(`Kommentar: ${item.comment}`), CONTENT_WIDTH - 90);
+                        doc.text(commentLines, MARGIN + 90, y);
+                        y += commentLines.length * 12;
+                    }
+                    y += 5;
+                }
+                y += 15;
+            }
+    
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8).setTextColor(150);
+                doc.text(`Seite ${i} von ${pageCount}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 20, { align: 'right' });
+                doc.text('Test-Vergleichsbericht', MARGIN, PAGE_HEIGHT - 20);
+            }
+    
+            doc.save('test-vergleichsbericht.pdf');
+        } catch (error) {
+            console.error("PDF-Export fehlgeschlagen:", error);
+            alert("PDF-Export fehlgeschlagen. Details in der Konsole.");
+        } finally {
+            setIsExporting(false);
+        }
+    }, [comparisonReports, overallSummary, isExporting]);
+
+  const handleExportHTML = useCallback(async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    setShowExportDropdown(false);
+    try {
+        const renderChartToImage = async (chartConfig: any, width: number, height: number): Promise<string> => {
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = width;
+            offscreenCanvas.height = height;
+            const chart = new Chart(offscreenCanvas, { ...chartConfig, options: {...chartConfig.options, animation: false, responsive: false, devicePixelRatio: 2} });
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const dataUrl = offscreenCanvas.toDataURL('image/png', 1.0);
+            chart.destroy();
+            return dataUrl;
+        };
+        
+        const overallChartLabelsWithCount = [`${TestStatus.PASSED} (${overallSummary.passed})`, `${TestStatus.FAILED} (${overallSummary.failed})`, `${TestStatus.IN_PROGRESS} (${overallSummary.inProgress})`, `${TestStatus.NOT_STARTED} (${overallSummary.notStarted})`];
+        const overallChartConfig = { type: 'doughnut', data: { labels: overallChartLabelsWithCount, datasets: [{ data: [overallSummary.passed, overallSummary.failed, overallSummary.inProgress, overallSummary.notStarted], backgroundColor: ['#4ade80', '#f87171', '#60a5fa', '#94a3b8'], borderColor: '#1e293b', borderWidth: 4 }] }, options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', padding: 20, boxWidth: 12 } } } } };
+        const overallChartImg = await renderChartToImage(overallChartConfig, 350, 350);
+
+        const getStatusBadgeHtml = (status: TestStatus) => {
+            let styles = '';
+            switch (status) {
+                case TestStatus.PASSED: styles = 'bg-green-500/20 text-green-300'; break;
+                case TestStatus.FAILED: styles = 'bg-red-500/20 text-red-300'; break;
+                case TestStatus.IN_PROGRESS: styles = 'bg-blue-500/20 text-blue-300'; break;
+                default: styles = 'bg-slate-500/20 text-slate-300'; break;
+            }
+            return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles} flex-shrink-0">${status}</span>`;
+        };
+
+        const htmlContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Test-Vergleichsbericht</title><script src="https://cdn.tailwindcss.com"></script><style>body{background-color:#0f172a;color:#cbd5e1;font-family:sans-serif;}</style></head><body><main class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto"><h1 class="text-3xl font-bold text-white mb-6 text-center">Test-Vergleichsbericht</h1><div class="mt-8"><h3 class="text-xl font-semibold text-white mb-4 border-b border-slate-700 pb-3">Detaillierte Testberichte</h3><div class="space-y-6 mt-4">${comparisonReports.map(report => `<div class="bg-slate-900/50 rounded-lg border border-white/10 p-4"><h4 class="font-semibold text-slate-100">${report.title}</h4><p class="text-sm text-slate-400">Von: ${report.testerName||'N/A'}</p><div class="mt-4 divide-y divide-slate-700">${report.items.map((item,index) => `<div class="py-2 flex justify-between items-start gap-4"><div class="flex items-start"><div class="w-8 text-slate-400 flex-shrink-0">${index+1}.</div><div class="flex-grow"><p class="text-slate-200">${item.description}</p>${item.comment?`<p class="text-sm text-cyan-300/80 italic mt-1">"${item.comment}"</p>`:''}${item.commentImage?`<img src="${item.commentImage}" alt="Anhang" class="max-w-xs mt-2 rounded border border-slate-600"/>`:''}</div></div>${getStatusBadgeHtml(item.status)}</div>`).join('')}</div></div>`).join('')}</div></div></main></body></html>`;
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'test-vergleichsbericht.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+    } catch (error) {
+        console.error("HTML-Export fehlgeschlagen:", error);
+    } finally {
+        setIsExporting(false);
+    }
+  }, [comparisonReports, overallSummary, performanceChartData, topFailuresData, aggregatedReports, isExporting]);
+  
+  const handleExportXLSX = useCallback(() => {
+    if (isExporting) return;
+    setIsExporting(true);
+    setShowExportDropdown(false);
+    try {
+        const wb = XLSX.utils.book_new();
+        const rawData = comparisonReports.flatMap(r => r.items.map(item => ({"Berichtstitel": r.title, "Tester": r.testerName || 'N/A', "Testpunkt-Beschreibung": item.description, "Status": item.status, "Kommentar": item.comment || ''})));
+        const wsRaw = XLSX.utils.json_to_sheet(rawData);
+        wsRaw['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 60 }, { wch: 15 }, { wch: 60 }];
+        XLSX.utils.book_append_sheet(wb, wsRaw, "Rohdaten");
+        XLSX.writeFile(wb, "test-vergleichsbericht.xlsx");
+    } catch (error) {
+        console.error("XLSX-Export fehlgeschlagen:", error);
+    } finally {
+        setIsExporting(false);
+    }
+  }, [comparisonReports, aggregatedReports, isExporting, overallSummary]);
+
 
   // Admin handlers
   const handleToggleAdminMode = () => setIsAdminMode(prev => !prev);
@@ -342,11 +610,21 @@ const App: React.FC = () => {
       );
     }
     if (isComparisonMode) {
-      return <ComparisonView reports={comparisonReports} onClose={handleCloseComparison} />;
+      return <ComparisonView 
+                reports={comparisonReports} 
+                selectedForDiff={selectedForDiff}
+                onSelectForDiff={handleSelectForDiff}
+                isDiffing={isDiffing}
+                setIsDiffing={setIsDiffing}
+                aggregatedReports={aggregatedReports}
+                overallSummary={overallSummary}
+                performanceChartData={performanceChartData}
+                topFailuresData={topFailuresData}
+             />;
     }
     return (
       <main className="p-4 sm:p-6 md:p-8">
-        <div className="max-w-7xl mx-auto bg-slate-800 rounded-2xl shadow-2xl shadow-indigo-500/10 ring-1 ring-white/10">
+        <div className="bg-slate-800 rounded-2xl shadow-2xl shadow-indigo-500/10 ring-1 ring-white/10">
           <div className="p-6 md:p-8">
             <TestPathSelector
               paths={testPaths.map(p => p.title)}
@@ -388,6 +666,17 @@ const App: React.FC = () => {
         onToggleAdmin={handleToggleAdminMode} 
         isAdminMode={isAdminMode} 
         onImportForComparison={handleImportForComparison}
+        // --- Props for comparison mode actions ---
+        isComparisonMode={isComparisonMode}
+        onCloseComparison={handleCloseComparison}
+        selectedForDiff={selectedForDiff}
+        onStartDiffing={() => setIsDiffing(true)}
+        isExporting={isExporting}
+        showExportDropdown={showExportDropdown}
+        setShowExportDropdown={setShowExportDropdown}
+        onExportPDF={handleExportPDF}
+        onExportHTML={handleExportHTML}
+        onExportXLSX={handleExportXLSX}
       />
       {renderContent()}
       <footer className="text-center p-4 text-slate-400 text-sm">

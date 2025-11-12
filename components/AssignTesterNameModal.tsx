@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { TestPath } from '../types';
 
@@ -34,7 +33,9 @@ const AssignTesterNameModal: React.FC<AssignTesterNameModalProps> = ({ pendingIt
     onConfirm(names);
   };
   
-  const allNamesEntered = Object.values(names).every(name => name.trim() !== '');
+  // FIX: Added a type guard to ensure `name` is a string before calling `.trim()`.
+  // This resolves the "Property 'trim' does not exist on type 'unknown'" error.
+  const allNamesEntered = Object.values(names).every(name => typeof name === 'string' && name.trim() !== '');
 
   return (
     <div 

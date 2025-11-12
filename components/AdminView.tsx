@@ -103,7 +103,7 @@ const AdminView: React.FC<AdminViewProps> = ({ testPaths, onAddPath, onUpdatePat
 
     return (
         <main className="p-4 sm:p-6 md:p-8">
-            <div className="max-w-4xl mx-auto">
+            <div>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-3xl font-bold tracking-tight text-white">Administration</h2>
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 transition-colors">

@@ -22,7 +22,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset w-24 justify-center ${getStatusStyles()}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap flex-shrink-0 ${getStatusStyles()}`}
     >
       {status}
     </span>
