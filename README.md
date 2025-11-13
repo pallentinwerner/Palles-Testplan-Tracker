@@ -1,20 +1,29 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
+# Run and deploy your app
 This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1Si2ZH_3lCNJnll6DwnBd3aOahFOp_kSq
-
-## Run Locally
 
 **Prerequisites:**  Node.js
 
-
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Run the app:
    `npm run dev`
+
+or
+
+1. `cd /your/front/folder`
+2. `npm run build`
+3. `cp -r build/ /var/www/html`
+
+
+<div align="center">
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_20_06--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_20_35--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_21_29--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_21_49--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_22_44--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_22_59-Chat-_-IT-_-Microsoft-Teams-scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_23_20--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_24_03--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_24_22--scaled.png" />
+   <img width="1200" height="475" alt="GHBanner" src="https://www.fotopalle.de/wp-content/uploads/2025/11/2025-11-12-15_24_39--scaled.png" />
+</div>
