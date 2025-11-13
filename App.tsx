@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [isComparisonMode, setIsComparisonMode] = useState<boolean>(false);
   const [comparisonReports, setComparisonReports] = useState<TestPath[]>([]);
   const [pendingNameAssignment, setPendingNameAssignment] = useState<PendingAssignment[]>([]);
+  const [pendingFailureStatus, setPendingFailureStatus] = useState<number | null>(null);
   
   // --- State lifted from ComparisonView ---
   const [selectedForDiff, setSelectedForDiff] = useState<TestPath[]>([]);
@@ -50,6 +51,16 @@ const App: React.FC = () => {
   const activePath = useMemo(() => testPaths[activePathIndex], [testPaths, activePathIndex]);
 
   const handleStatusChange = useCallback((itemId: number, newStatus: TestStatus) => {
+    const itemToChange = activePath.items.find(i => i.id === itemId);
+    if (!itemToChange) return;
+
+    // Intercept 'Failed' status if no comment exists, and force comment entry.
+    if (newStatus === TestStatus.FAILED && (!itemToChange.comment || itemToChange.comment.trim() === '')) {
+      setPendingFailureStatus(itemId);
+      setEditingCommentItem(itemToChange);
+      return;
+    }
+
     setTestPaths(prevPaths => {
       const newPaths = [...prevPaths];
       const path_to_update = { ...newPaths[activePathIndex] };
@@ -68,7 +79,7 @@ const App: React.FC = () => {
       newPaths[activePathIndex] = path_to_update;
       return newPaths;
     });
-  }, [activePathIndex]);
+  }, [activePath, activePathIndex]);
 
   const handleOpenCommentModal = useCallback((itemId: number) => {
     const item = activePath.items.find(i => i.id === itemId);
@@ -79,20 +90,30 @@ const App: React.FC = () => {
 
   const handleCloseCommentModal = useCallback(() => {
     setEditingCommentItem(null);
+    setPendingFailureStatus(null); // Ensure pending failure is cleared on cancel
   }, []);
 
   const handleSaveComment = useCallback((itemId: number, comment: string, commentImages: string[]) => {
     setTestPaths(prevPaths => {
       const newPaths = [...prevPaths];
       const path_to_update = { ...newPaths[activePathIndex] };
-      path_to_update.items = path_to_update.items.map(item =>
-        item.id === itemId ? { ...item, comment, commentImages } : item
-      );
+      path_to_update.items = path_to_update.items.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, comment, commentImages };
+          // If this was a pending failure, also update the status now that a comment is saved.
+          if (pendingFailureStatus !== null && item.id === pendingFailureStatus) {
+            updatedItem.status = TestStatus.FAILED;
+          }
+          return updatedItem;
+        }
+        return item;
+      });
       newPaths[activePathIndex] = path_to_update;
       return newPaths;
     });
     setEditingCommentItem(null);
-  }, [activePathIndex]);
+    setPendingFailureStatus(null); // Always reset after save
+  }, [activePathIndex, pendingFailureStatus]);
   
   const handleExportToJSON = useCallback(() => {
     if (!activePath || !testerName) return;
@@ -490,7 +511,7 @@ const App: React.FC = () => {
             return `<span style="display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; ${styles}">${status}</span>`;
         };
 
-        const htmlContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Test-Vergleichsbericht</title><style>body{background-color:#111827;color:#d1d5db;font-family:sans-serif;} main{padding:2rem; max-width:1280px; margin:auto;} h1{font-size:1.875rem;font-weight:700;color:white;margin-bottom:1.5rem;text-align:center;} h3{font-size:1.25rem;font-weight:600;color:white;margin-bottom:1rem;border-bottom:1px solid #374151;padding-bottom:0.75rem;} .report-card{background-color:#1f2937;border-radius:0.5rem;border:1px solid #374151;padding:1rem;margin-top:1rem;} .report-card h4{font-weight:600;color:#f9fafb;} .report-card p{font-size:0.875rem;color:#9ca3af;} .item-row{padding:0.5rem 0;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;} .item-desc{color:#e5e7eb;} .item-comment{font-size:0.875rem;color:#2dd4bf;font-style:italic;margin-top:0.25rem;} .item-image-container{display:flex;gap:0.5rem;margin-top:0.5rem;} .item-image{max-width:200px;max-height:100px;border-radius:0.25rem;border:1px solid #4b5563;}</style></head><body><main><h1>Test-Vergleichsbericht</h1><div><h3>Detaillierte Testberichte</h3><div style="margin-top:1rem; display:grid; gap:1.5rem;">${comparisonReports.map(report => `<div class="report-card"><h4>${report.title}</h4><p>Von: ${report.testerName||'N/A'}</p><div style="margin-top:1rem; border-top: 1px solid #374151;">${report.items.map((item,index) => `<div class="item-row" style="border-bottom: 1px solid #374151;"><div style="flex-grow:1;"><p class="item-desc"><span style="color:#6b7280;margin-right:0.5rem;">${index+1}.</span>${item.description}</p>${item.comment?`<p class="item-comment">"${item.comment}"</p>`:''}${item.commentImages && item.commentImages.length > 0 ? `<div class="item-image-container">${item.commentImages.map(img => `<img src="${img}" alt="Anhang" class="item-image"/>`).join('')}</div>` : ''}</div>${getStatusBadgeHtml(item.status)}</div>`).join('')}</div></div>`).join('')}</div></div></main></body></html>`;
+        const htmlContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Test-Vergleichsbericht</title><style>body{background-color:#111827;color:#d1d5db;font-family:sans-serif;} main{padding:2rem; max-width:1280px; margin:auto;} h1{font-size:1.875rem;font-weight:700;color:white;margin-bottom:1.5rem;text-align:center;} h3{font-size:1.25rem;font-weight:600;color:white;margin-bottom:1rem;border-bottom:1px solid #374151;padding-bottom:0.75rem;} .report-card{background-color:#1f2937;border-radius:0.5rem;border:1px solid #374151;padding:1rem;margin-top:1rem;} .report-card h4{font-weight:600;color:#f9fafb;} .report-card p{font-size:0.875rem;color:#9ca3af;} .item-row{padding:0.5rem 0;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;} .item-desc{color:#e5e7eb;} .item-comment{font-size:0.875rem;color:#2dd4bf;margin-top:0.25rem;} .item-comment p{margin:0;padding:0;} .item-comment ul, .item-comment ol{margin-top:0.5rem;margin-bottom:0.5rem;margin-left:1.25rem;} .item-comment li{margin-bottom:0.25rem;} .item-image-container{display:flex;gap:0.5rem;margin-top:0.5rem;} .item-image{max-width:200px;max-height:100px;border-radius:0.25rem;border:1px solid #4b5563;}</style></head><body><main><h1>Test-Vergleichsbericht</h1><div><h3>Detaillierte Testberichte</h3><div style="margin-top:1rem; display:grid; gap:1.5rem;">${comparisonReports.map(report => `<div class="report-card"><h4>${report.title}</h4><p>Von: ${report.testerName||'N/A'}</p><div style="margin-top:1rem; border-top: 1px solid #374151;">${report.items.map((item,index) => `<div class="item-row" style="border-bottom: 1px solid #374151;"><div style="flex-grow:1;"><p class="item-desc"><span style="color:#6b7280;margin-right:0.5rem;">${index+1}.</span>${item.description}</p>${item.comment?`<div class="item-comment">${item.comment}</div>`:''}${item.commentImages && item.commentImages.length > 0 ? `<div class="item-image-container">${item.commentImages.map(img => `<img src="${img}" alt="Anhang" class="item-image"/>`).join('')}</div>` : ''}</div>${getStatusBadgeHtml(item.status)}</div>`).join('')}</div></div>`).join('')}</div></div></main></body></html>`;
 
         const blob = new Blob([htmlContent], { type: 'text/html' });
         const link = document.createElement('a');
@@ -667,6 +688,7 @@ const App: React.FC = () => {
           item={editingCommentItem}
           onClose={handleCloseCommentModal}
           onSave={handleSaveComment}
+          isFailureCommentRequired={pendingFailureStatus === editingCommentItem.id}
         />
       )}
       {!testerName && (

@@ -40,6 +40,10 @@ const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewI
                     </button>
                 </div>
                 <div className="overflow-y-auto">
+                    <style>{`
+                        .diff-comment-content ul { list-style-type: disc; margin-left: 1.25rem; }
+                        .diff-comment-content ol { list-style-type: decimal; margin-left: 1.25rem; }
+                    `}</style>
                     <table className="w-full text-sm text-left table-fixed">
                         <thead className="bg-gray-800/50 sticky top-0 z-10">
                             <tr>
@@ -76,8 +80,8 @@ const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewI
                                                         <div className="flex flex-col gap-3">
                                                             <StatusBadge status={item.status} />
                                                             {item.comment && (
-                                                                <blockquote className="text-sm text-cyan-300/90 p-2 border-l-4 border-cyan-500/50 italic bg-gray-900/50 rounded-r-md">
-                                                                    {item.comment}
+                                                                <blockquote className="diff-comment-content text-sm text-cyan-300/90 p-2 border-l-4 border-cyan-500/50 bg-gray-900/50 rounded-r-md">
+                                                                    <div dangerouslySetInnerHTML={{ __html: item.comment }} />
                                                                 </blockquote>
                                                             )}
                                                             {item.commentImages && item.commentImages.length > 0 && (

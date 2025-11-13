@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { TestItem } from '../types';
 
@@ -6,17 +7,51 @@ interface CommentModalProps {
   item: TestItem;
   onClose: () => void;
   onSave: (itemId: number, comment: string, commentImages: string[]) => void;
+  isFailureCommentRequired?: boolean;
 }
 
-const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) => {
+const EditorToolbar: React.FC<{ onFormat: (cmd: string, val?: string) => void }> = ({ onFormat }) => {
+    const buttons = [
+        { cmd: 'bold', icon: 'B', title: 'Fett' },
+        { cmd: 'italic', icon: 'I', title: 'Kursiv' },
+        { cmd: 'underline', icon: 'U', title: 'Unterstrichen' },
+        { cmd: 'strikeThrough', icon: 'S', title: 'Durchgestrichen' },
+        { cmd: 'insertUnorderedList', icon: 'UL', title: 'Ungeordnete Liste' },
+        { cmd: 'insertOrderedList', icon: 'OL', title: 'Geordnete Liste' },
+    ];
+
+    return (
+        <div className="flex items-center space-x-1 bg-gray-900 border border-gray-600 rounded-t-md p-2">
+            {buttons.map(({ cmd, icon, title }) => (
+                <button
+                    key={cmd}
+                    onClick={() => onFormat(cmd)}
+                    onMouseDown={(e) => e.preventDefault()} // Prevent editor from losing focus
+                    title={title}
+                    className="w-8 h-8 flex items-center justify-center rounded text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                    <span className={`font-serif ${cmd === 'bold' ? 'font-bold' : ''} ${cmd === 'italic' ? 'italic' : ''} ${cmd === 'underline' ? 'underline' : ''} ${cmd === 'strikeThrough' ? 'line-through' : ''}`}>{icon}</span>
+                </button>
+            ))}
+        </div>
+    );
+};
+
+
+const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave, isFailureCommentRequired = false }) => {
   const [comment, setComment] = useState(item.comment || '');
   const [images, setImages] = useState<string[]>(item.commentImages || []);
   const modalRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (editorRef.current) {
+        editorRef.current.innerHTML = item.comment || '';
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !isFailureCommentRequired) {
         onClose();
       }
     };
@@ -25,14 +60,22 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, [onClose, isFailureCommentRequired, item.comment]);
 
+  const hasTextContent = (htmlString: string) => {
+    if (!htmlString) return false;
+    const tempEl = document.createElement('div');
+    tempEl.innerHTML = htmlString;
+    return tempEl.textContent?.trim() !== '';
+  };
+  
   const handleSave = () => {
+    if (isFailureCommentRequired && !hasTextContent(comment)) return;
     onSave(item.id, comment, images);
   };
   
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+    if (modalRef.current && !modalRef.current.contains(event.target as Node) && !isFailureCommentRequired) {
         onClose();
     }
   };
@@ -44,9 +87,6 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-        // FIX: Explicitly type the 'file' parameter as 'File' to resolve type inference issues.
-        // This ensures that properties like 'type' are accessible and that the 'file' object
-        // can be correctly passed to functions expecting a Blob, like FileReader.readAsDataURL.
         const filePromises = Array.from(files).map((file: File) => {
             return new Promise<string>((resolve, reject) => {
                 if (file.type.startsWith('image/')) {
@@ -74,6 +114,16 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
   const handleRemoveImage = (indexToRemove: number) => {
     setImages(prev => prev.filter((_, index) => index !== indexToRemove));
   }
+  
+  const handleFormat = (command: string, value: string | null = null) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    if (editorRef.current) {
+        setComment(editorRef.current.innerHTML);
+    }
+  };
+  
+  const isSaveDisabled = isFailureCommentRequired && !hasTextContent(comment);
 
 
   return (
@@ -83,23 +133,29 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
         aria-modal="true"
         role="dialog"
     >
-      <div ref={modalRef} className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div ref={modalRef} className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
         <div className="p-6">
           <h2 className="text-xl font-bold text-white">
-            Kommentar hinzufügen/bearbeiten
+            {isFailureCommentRequired ? 'Kommentar für fehlgeschlagenen Test erforderlich' : 'Kommentar hinzufügen/bearbeiten'}
           </h2>
           <p className="text-sm text-gray-400 mt-1">
             Für Testpunkt: <span className="font-medium text-gray-200">"{item.description}"</span>
           </p>
         </div>
         <div className="px-6 pb-6 space-y-4">
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Geben Sie hier Ihre Kommentare ein..."
-            className="w-full h-32 p-3 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-200 placeholder-gray-500"
-            aria-label="Kommentar eingeben"
-          />
+            <div>
+                <EditorToolbar onFormat={handleFormat} />
+                {/* FIX: Replaced invalid 'placeholder' attribute with a CSS-based placeholder for contentEditable div. */}
+                <div
+                    ref={editorRef}
+                    onInput={(e) => setComment(e.currentTarget.innerHTML)}
+                    data-placeholder={isFailureCommentRequired ? "Bitte beschreiben Sie den Grund für den Fehlschlag..." : "Geben Sie hier Ihre Kommentare ein..."}
+                    className="w-full min-h-[200px] p-3 bg-gray-900 border border-t-0 border-gray-600 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-200 relative empty:before:content-[attr(data-placeholder)] empty:before:absolute empty:before:left-3 empty:before:top-3 empty:before:text-gray-500 empty:before:pointer-events-none"
+                    contentEditable={true}
+                    suppressContentEditableWarning={true}
+                    aria-label="Kommentar eingeben"
+                />
+            </div>
           <div>
             <input 
                 type="file"
@@ -141,13 +197,15 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave }) =>
         <div className="bg-gray-800/50 border-t border-gray-700 px-6 py-4 flex justify-end items-center space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors"
+            disabled={isFailureCommentRequired}
+            className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Abbrechen
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors"
+            disabled={isSaveDisabled}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Kommentar speichern
           </button>

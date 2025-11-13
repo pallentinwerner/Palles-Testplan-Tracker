@@ -27,9 +27,13 @@ interface AggregatedItem {
 const AggregatedDetailModal: React.FC<AggregatedDetailModalProps> = ({ reportTitle, reports, onClose, onViewImage }) => {
     const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null);
 
-    const handleCopyComment = (commentText: string, uniqueId: string) => {
-        if (!commentText) return;
-        navigator.clipboard.writeText(commentText).then(() => {
+    const handleCopyComment = (commentHtml: string, uniqueId: string) => {
+        if (!commentHtml) return;
+        const tempEl = document.createElement('div');
+        tempEl.innerHTML = commentHtml;
+        const textToCopy = tempEl.textContent || tempEl.innerText || '';
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
             setCopiedCommentId(uniqueId);
             setTimeout(() => setCopiedCommentId(null), 2000);
         }).catch(err => {
@@ -83,6 +87,10 @@ const AggregatedDetailModal: React.FC<AggregatedDetailModalProps> = ({ reportTit
                     <h2 className="text-xl font-bold text-white">Aggregierte Details für "{reportTitle}"</h2>
                 </div>
                 <div className="p-6 overflow-y-auto">
+                    <style>{`
+                        .agg-comment-content ul { list-style-type: disc; margin-left: 1.5rem; }
+                        .agg-comment-content ol { list-style-type: decimal; margin-left: 1.5rem; }
+                    `}</style>
                     <div className="divide-y divide-gray-700">
                         {aggregatedData.map((item, index) => (
                             <div key={item.description} className="py-4">
@@ -104,7 +112,7 @@ const AggregatedDetailModal: React.FC<AggregatedDetailModalProps> = ({ reportTit
                                                <p className="text-xs font-semibold text-blue-400">{c.testerName}</p>
                                                 {c.comment && (
                                                     <div className="group relative mt-1">
-                                                        <p className="text-sm text-gray-300 italic pr-8">"{c.comment}"</p>
+                                                        <div className="agg-comment-content text-sm text-gray-300 pr-8" dangerouslySetInnerHTML={{ __html: c.comment }} />
                                                         <button
                                                             onClick={() => handleCopyComment(c.comment as string, `${item.description}-${cIndex}`)}
                                                             title="Kommentar kopieren"

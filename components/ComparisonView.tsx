@@ -21,9 +21,13 @@ declare global {
 const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onViewImage: (src: string) => void; }> = ({ report, onClose, onViewImage }) => {
     const [copiedCommentId, setCopiedCommentId] = useState<number | null>(null);
 
-    const handleCopyComment = (commentText: string, itemId: number) => {
-        if (!commentText) return;
-        navigator.clipboard.writeText(commentText).then(() => {
+    const handleCopyComment = (commentHtml: string, itemId: number) => {
+        if (!commentHtml) return;
+        const tempEl = document.createElement('div');
+        tempEl.innerHTML = commentHtml;
+        const textToCopy = tempEl.textContent || tempEl.innerText || '';
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
             setCopiedCommentId(itemId);
             setTimeout(() => setCopiedCommentId(null), 2000);
         }).catch(err => {
@@ -49,9 +53,14 @@ const ReportDetailModal: React.FC<{ report: TestPath; onClose: () => void; onVie
                                         <p className="text-gray-200">{item.description}</p>
                                         {item.comment && (
                                             <div className="group relative mt-1">
-                                                <p className="text-xs text-cyan-300/80 pl-2 border-l-2 border-cyan-500/50 italic pr-8">
-                                                    {item.comment}
-                                                </p>
+                                                 <style>{`
+                                                    .comment-content ul { list-style-type: disc; margin-left: 1.5rem; }
+                                                    .comment-content ol { list-style-type: decimal; margin-left: 1.5rem; }
+                                                `}</style>
+                                                <div
+                                                    className="comment-content text-xs text-cyan-300/80 pl-2 border-l-2 border-cyan-500/50 pr-8"
+                                                    dangerouslySetInnerHTML={{ __html: item.comment }}
+                                                />
                                                 <button
                                                     onClick={() => handleCopyComment(item.comment as string, item.id)}
                                                     title="Kommentar kopieren"

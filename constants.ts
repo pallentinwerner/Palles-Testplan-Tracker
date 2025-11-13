@@ -6,7 +6,7 @@ const weg1Items = [
 ];
 
 const weg2Items = [
-  "Tesfall 1",
+  "Testfall 1",
   "Testfall 2",
 ];
 
