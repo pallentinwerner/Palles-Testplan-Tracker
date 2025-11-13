@@ -22,8 +22,10 @@ const ActionButton: React.FC<{ onClick: () => void; children: React.ReactNode, c
 
 
 const TestItemRow: React.FC<TestItemRowProps> = ({ item, itemNumber, onStatusChange, onOpenCommentModal }) => {
+  const isCompleted = item.status === TestStatus.PASSED || item.status === TestStatus.FAILED;
+
   return (
-    <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between hover:bg-gray-800 transition-colors">
+    <div className={`p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between hover:bg-gray-800 transition-all ${isCompleted ? 'opacity-50 hover:opacity-100' : ''}`}>
         <div className="flex items-start mb-4 sm:mb-0">
             <div className="flex-shrink-0 w-8 text-sm font-medium text-gray-400 text-right mr-4">{itemNumber}.</div>
             <p className="flex-1 text-gray-200">{item.description}</p>
