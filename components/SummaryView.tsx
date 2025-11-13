@@ -17,6 +17,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport, pathTitle })
         return {
             total: 0, passed: 0, failed: 0, inProgress: 0, notStarted: 0, completion: 0,
             passedPercent: '0.0', failedPercent: '0.0', inProgressPercent: '0.0', notStartedPercent: '0.0',
+            passedWidthPercent: 0, failedWidthPercent: 0,
             isComplete: false, openTests: 0,
         };
     }
@@ -34,6 +35,8 @@ const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport, pathTitle })
         failedPercent: ((failed / total) * 100).toFixed(1),
         inProgressPercent: ((inProgress / total) * 100).toFixed(1),
         notStartedPercent: ((notStarted / total) * 100).toFixed(1),
+        passedWidthPercent: (passed / total) * 100,
+        failedWidthPercent: (failed / total) * 100,
         isComplete,
         openTests
     };
@@ -66,16 +69,22 @@ const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport, pathTitle })
               className="inline-flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 a-3 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               <span>{`Testergebnis zu ${pathTitle} exportieren`}</span>
             </button>
         </div>
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-2.5">
-        <div 
-          className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" 
-          style={{ width: `${summary.completion}%` }}
+      <div className="w-full bg-gray-700 rounded-full h-2.5 flex overflow-hidden" title={`Gesamtfortschritt: ${summary.completion}%`}>
+        <div
+          className="bg-green-400 h-full transition-all duration-500"
+          style={{ width: `${summary.passedWidthPercent}%` }}
+          title={`Bestanden: ${summary.passedPercent}%`}
+        ></div>
+        <div
+          className="bg-red-400 h-full transition-all duration-500"
+          style={{ width: `${summary.failedWidthPercent}%` }}
+          title={`Fehlgeschlagen: ${summary.failedPercent}%`}
         ></div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 text-center">

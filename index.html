@@ -19,6 +19,38 @@
   }
 }
 </script>
+<style>
+  @keyframes toast-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .toast-animate-in {
+    animation: toast-in-right 0.3s ease-out forwards;
+  }
+
+  /* Custom scrollbar styling for a better dark mode experience */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1f2937; /* gray-800 */
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #4b5563; /* gray-600 */
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; /* gray-500 */
+  }
+</style>
 </head>
   <body class="bg-gray-900">
     <div id="root"></div>

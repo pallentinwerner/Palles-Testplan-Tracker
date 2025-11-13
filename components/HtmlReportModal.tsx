@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TestPath, TestStatus } from '../types';
 import StatusBadge from './StatusBadge';
+import ImageComparisonModal from './ImageComparisonModal';
 
 interface DiffViewModalProps {
     reports: TestPath[];
@@ -14,6 +15,7 @@ const areStringsSimilar = (a: string, b: string) => {
 };
 
 const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewImage }) => {
+    const [comparingImagesOfItem, setComparingImagesOfItem] = useState<{description: string, index: number} | null>(null);
     const maxItems = Math.max(0, ...reports.map(r => r.items.length));
     const itemRows = Array.from({ length: maxItems }, (_, i) => i);
 
@@ -65,12 +67,26 @@ const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewI
                                 const descriptions = reports.map(r => r.items[i]?.description).filter(Boolean) as string[];
                                 const descriptionMismatch = descriptions.length > 0 && descriptions.some(d => !areStringsSimilar(d, descriptions[0]));
 
+                                const hasImages = reports.some(r => r.items[i]?.commentImages && r.items[i].commentImages!.length > 0);
+
                                 return (
                                     <tr key={i} className={`transition-colors hover:bg-gray-700/50 ${hasDifference ? 'bg-yellow-500/10' : ''}`}>
                                         <td className="p-4 align-top text-gray-400">{i + 1}.</td>
                                         <td className={`p-4 align-top ${descriptionMismatch ? 'text-red-400' : 'text-gray-200'}`}>
-                                            {referenceItem?.description || 'N/A'}
+                                            <p className="font-semibold">{referenceItem?.description || 'N/A'}</p>
+                                            {referenceItem?.details && <p className="text-xs text-gray-400 mt-1 whitespace-pre-wrap">{referenceItem.details}</p>}
                                             {descriptionMismatch && <div className="text-xs text-red-500 mt-1 font-semibold">Beschreibung weicht in anderen Berichten ab!</div>}
+                                            {hasImages && (
+                                                <button 
+                                                    onClick={() => setComparingImagesOfItem({description: referenceItem!.description, index: i})}
+                                                    className="mt-3 flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Bilder vergleichen
+                                                </button>
+                                            )}
                                         </td>
                                         {reports.map((report, reportIndex) => {
                                             const item = report.items[i];
@@ -83,6 +99,9 @@ const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewI
                                                                 <blockquote className="diff-comment-content text-sm text-cyan-300/90 p-2 border-l-4 border-cyan-500/50 bg-gray-900/50 rounded-r-md">
                                                                     <div dangerouslySetInnerHTML={{ __html: item.comment }} />
                                                                 </blockquote>
+                                                            )}
+                                                             {item.details && (
+                                                                <div className="text-xs text-gray-400 whitespace-pre-wrap border-l-4 border-gray-600 pl-2">{item.details}</div>
                                                             )}
                                                             {item.commentImages && item.commentImages.length > 0 && (
                                                                 <div className="mt-1 flex flex-wrap gap-2">
@@ -110,6 +129,15 @@ const DiffViewModal: React.FC<DiffViewModalProps> = ({ reports, onClose, onViewI
                         </tbody>
                     </table>
                 </div>
+                {comparingImagesOfItem !== null && (
+                    <ImageComparisonModal
+                        itemDescription={comparingImagesOfItem.description}
+                        reports={reports}
+                        itemIndex={comparingImagesOfItem.index}
+                        onClose={() => setComparingImagesOfItem(null)}
+                        onViewImage={onViewImage}
+                    />
+                )}
             </div>
         </div>
     );

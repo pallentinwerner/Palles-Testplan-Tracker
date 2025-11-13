@@ -167,7 +167,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave, isFa
                     ref={editorRef}
                     onInput={(e) => setComment(e.currentTarget.innerHTML)}
                     data-placeholder={isFailureCommentRequired ? "Bitte beschreiben Sie den Grund für den Fehlschlag..." : "Geben Sie hier Ihre Kommentare ein..."}
-                    className="w-full min-h-[200px] p-3 bg-gray-900 border border-t-0 border-gray-600 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-200 relative empty:before:content-[attr(data-placeholder)] empty:before:absolute empty:before:left-3 empty:before:top-3 empty:before:text-gray-500 empty:before:pointer-events-none"
+                    className="w-full min-h-[200px] max-h-72 overflow-y-auto p-3 bg-gray-900 border border-t-0 border-gray-600 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-200 relative empty:before:content-[attr(data-placeholder)] empty:before:absolute empty:before:left-3 empty:before:top-3 empty:before:text-gray-500 empty:before:pointer-events-none"
                     contentEditable={true}
                     suppressContentEditableWarning={true}
                     aria-label="Kommentar eingeben"

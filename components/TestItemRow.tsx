@@ -1,5 +1,6 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { TestItem, TestStatus } from '../types';
 import StatusBadge from './StatusBadge';
 
@@ -22,20 +23,81 @@ const ActionButton: React.FC<{ onClick: () => void; children: React.ReactNode, c
 
 
 const TestItemRow: React.FC<TestItemRowProps> = ({ item, itemNumber, onStatusChange, onOpenCommentModal }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const isCompleted = item.status === TestStatus.PASSED || item.status === TestStatus.FAILED;
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    // Prevent shortcuts from firing when a button within the row is focused and space/enter is pressed,
+    // which would trigger a click event on the button.
+    if ((event.target as HTMLElement).tagName === 'BUTTON' && (event.key === ' ' || event.key === 'Enter')) {
+        return;
+    }
+
+    let statusToSet: TestStatus | null = null;
+    switch (event.key.toLowerCase()) {
+        case 'p':
+            statusToSet = TestStatus.PASSED;
+            break;
+        case 'f':
+            statusToSet = TestStatus.FAILED;
+            break;
+        case 'i':
+            statusToSet = TestStatus.IN_PROGRESS;
+            break;
+        case 'n':
+            statusToSet = TestStatus.NOT_STARTED;
+            break;
+        case 'c':
+            onOpenCommentModal(item.id);
+            break;
+        default:
+            return; // Do nothing for other keys.
+    }
+    
+    // If a status key was pressed, call the handler.
+    if (statusToSet) {
+        onStatusChange(item.id, statusToSet);
+    }
+
+    // Prevent default browser action for the key (e.g., scrolling with spacebar)
+    event.preventDefault();
+  };
+
   return (
-    <div className={`p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between hover:bg-gray-800 transition-all ${isCompleted ? 'opacity-50 hover:opacity-100' : ''}`}>
-        <div className="flex items-start mb-4 sm:mb-0">
-            <div className="flex-shrink-0 w-8 text-sm font-medium text-gray-400 text-right mr-4">{itemNumber}.</div>
-            <p className="flex-1 text-gray-200">{item.description}</p>
+    <div 
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        className={`p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between hover:bg-gray-800 transition-all relative focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500 focus:z-10 ${isCompleted ? 'opacity-50 hover:opacity-100' : ''}`}>
+        <div className="flex-1 mb-4 sm:mb-0">
+            <div className="flex items-start">
+                <div className="flex-shrink-0 w-8 text-sm font-medium text-gray-400 text-right mr-4">{itemNumber}.</div>
+                <p className="flex-1 text-gray-200">{item.description}</p>
+                 {item.details && item.details.trim() && (
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="ml-2 p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700 flex-shrink-0"
+                        aria-expanded={isExpanded}
+                        aria-controls={`details-${item.id}`}
+                        title={isExpanded ? "Details ausblenden" : "Details anzeigen"}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                )}
+            </div>
+             {isExpanded && item.details && (
+                 <div id={`details-${item.id}`} className="pl-12 mt-2 pt-2 border-t border-gray-700/50">
+                    <p className="text-sm text-gray-400 whitespace-pre-wrap">{item.details}</p>
+                </div>
+            )}
         </div>
         <div className="flex items-center justify-end sm:justify-start space-x-2 pl-12 sm:pl-4">
             <StatusBadge status={item.status} />
             <div className="flex items-center space-x-1.5">
                 <ActionButton
                     onClick={() => onOpenCommentModal(item.id)}
-                    title="Kommentar"
+                    title="Kommentar (C)"
                     className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 relative"
                 >
                     {item.comment ? (
@@ -55,28 +117,28 @@ const TestItemRow: React.FC<TestItemRowProps> = ({ item, itemNumber, onStatusCha
                 </ActionButton>
                 <ActionButton 
                     onClick={() => onStatusChange(item.id, TestStatus.PASSED)}
-                    title="Bestanden"
+                    title="Bestanden (P)"
                     className="text-green-400 bg-green-500/10 hover:bg-green-500/20"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                 </ActionButton>
                 <ActionButton 
                     onClick={() => onStatusChange(item.id, TestStatus.FAILED)}
-                    title="Fehlgeschlagen"
+                    title="Fehlgeschlagen (F)"
                     className="text-red-400 bg-red-500/10 hover:bg-red-500/20"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                 </ActionButton>
                 <ActionButton 
                     onClick={() => onStatusChange(item.id, TestStatus.IN_PROGRESS)}
-                    title="In Bearbeitung"
+                    title="In Bearbeitung (I)"
                     className="text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
                 </ActionButton>
                  <ActionButton 
                     onClick={() => onStatusChange(item.id, TestStatus.NOT_STARTED)}
-                    title="Zurücksetzen"
+                    title="Zurücksetzen (N)"
                     className="text-gray-400 bg-gray-500/10 hover:bg-gray-500/20"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" /></svg>

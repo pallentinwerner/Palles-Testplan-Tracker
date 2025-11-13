@@ -9,6 +9,7 @@ export enum TestStatus {
 export interface TestItem {
   id: number;
   description: string;
+  details?: string;
   status: TestStatus;
   comment?: string;
   commentImages?: string[];
@@ -28,6 +29,7 @@ export const isTestItem = (item: any): item is TestItem => {
     if (item == null || typeof item !== 'object') return false;
     return typeof item.id === 'number' &&
         typeof item.description === 'string' &&
+        (item.details === undefined || item.details === null || typeof item.details === 'string') &&
         typeof item.status === 'string' &&
         Object.values(TestStatus).includes(item.status as TestStatus) &&
         (item.comment === undefined || item.comment === null || typeof item.comment === 'string') &&

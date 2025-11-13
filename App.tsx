@@ -12,6 +12,7 @@ import TesterNameModal from './components/TesterNameModal';
 import AdminView from './components/AdminView';
 import ComparisonView from './components/ComparisonView';
 import AssignTesterNameModal from './components/AssignTesterNameModal';
+import Toast from './components/Toast';
 
 // Make TypeScript aware of the globals from CDNs
 declare var Chart: any;
@@ -71,6 +72,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCanc
 };
 
 
+interface ToastState {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 const App: React.FC = () => {
   const [testPaths, setTestPaths] = useState<TestPath[]>(TEST_PATHS);
   const [activePathIndex, setActivePathIndex] = useState<number>(0);
@@ -83,6 +90,7 @@ const App: React.FC = () => {
   const [pendingFailureStatus, setPendingFailureStatus] = useState<number | null>(null);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [importUsed, setImportUsed] = useState<boolean>(false);
+  const [toasts, setToasts] = useState<ToastState[]>([]);
   
   // --- State lifted from ComparisonView ---
   const [selectedForDiff, setSelectedForDiff] = useState<TestPath[]>([]);
@@ -92,6 +100,20 @@ const App: React.FC = () => {
 
 
   const activePath = useMemo(() => testPaths[activePathIndex], [testPaths, activePathIndex]);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts(prevToasts => [...prevToasts, { id, message, type }]);
+  }, []);
+
+  const removeToast = (id: number) => {
+    setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+  };
+  
+  const handleNameSubmit = useCallback((name: string) => {
+    setTesterName(name);
+    showToast(`Herzlich Willkommen ${name}, importiere Deinen Testplan und starte Deine Tests`, 'success');
+  }, [showToast]);
 
   const handleStatusChange = useCallback((itemId: number, newStatus: TestStatus) => {
     const itemToChange = activePath.items.find(i => i.id === itemId);
@@ -122,7 +144,8 @@ const App: React.FC = () => {
       newPaths[activePathIndex] = path_to_update;
       return newPaths;
     });
-  }, [activePath, activePathIndex]);
+    showToast(`Status auf "${newStatus}" geändert.`, 'success');
+  }, [activePath, activePathIndex, showToast]);
 
   const handleOpenCommentModal = useCallback((itemId: number) => {
     const item = activePath.items.find(i => i.id === itemId);
@@ -156,7 +179,8 @@ const App: React.FC = () => {
     });
     setEditingCommentItem(null);
     setPendingFailureStatus(null); // Always reset after save
-  }, [activePathIndex, pendingFailureStatus]);
+    showToast('Kommentar erfolgreich gespeichert.', 'success');
+  }, [activePathIndex, pendingFailureStatus, showToast]);
   
   const handleExportToJSON = useCallback(() => {
     if (!activePath || !testerName) return;
@@ -183,8 +207,9 @@ const App: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      showToast(`Testergebnis für '${activePath.title}' exportiert.`, 'success');
     }
-  }, [activePath, testerName]);
+  }, [activePath, testerName, showToast]);
 
   const processImportedFiles = useCallback((files: FileList, context: 'main' | 'comparison') => {
     if (!files || files.length === 0) return;
@@ -262,12 +287,13 @@ const App: React.FC = () => {
         if (reportsNeedingName.length > 0) {
             setPendingNameAssignment(prev => [...prev, ...reportsNeedingName]);
         }
+        showToast('Berichte erfolgreich verarbeitet.', 'success');
       })
       .catch(error => {
         console.error("Import fehlgeschlagen:", error);
-        alert(`Import von Dateien fehlgeschlagen: ${error.message}`);
+        showToast(`Import fehlgeschlagen: ${error.message}`, 'error');
       });
-  }, []);
+  }, [showToast]);
 
   const addReportsToMainView = (reports: TestPath[]) => {
     setTestPaths(currentPaths => {
@@ -515,13 +541,14 @@ const App: React.FC = () => {
             }
     
             doc.save('test-vergleichsbericht.pdf');
+            showToast('PDF-Bericht erfolgreich exportiert.', 'success');
         } catch (error) {
             console.error("PDF-Export fehlgeschlagen:", error);
-            alert("PDF-Export fehlgeschlagen. Details in der Konsole.");
+            showToast("PDF-Export fehlgeschlagen. Details in der Konsole.", 'error');
         } finally {
             setIsExporting(false);
         }
-    }, [comparisonReports, overallSummary, isExporting]);
+    }, [comparisonReports, overallSummary, isExporting, showToast]);
 
   const handleExportHTML = useCallback(async () => {
     if (isExporting) return;
@@ -564,13 +591,14 @@ const App: React.FC = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
-
+        showToast('HTML-Bericht erfolgreich exportiert.', 'success');
     } catch (error) {
         console.error("HTML-Export fehlgeschlagen:", error);
+        showToast("HTML-Export fehlgeschlagen.", 'error');
     } finally {
         setIsExporting(false);
     }
-  }, [comparisonReports, overallSummary, performanceChartData, topFailuresData, aggregatedReports, isExporting]);
+  }, [comparisonReports, overallSummary, performanceChartData, topFailuresData, aggregatedReports, isExporting, showToast]);
   
   const handleExportXLSX = useCallback(() => {
     if (isExporting) return;
@@ -583,18 +611,20 @@ const App: React.FC = () => {
         wsRaw['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 60 }, { wch: 15 }, { wch: 60 }];
         XLSX.utils.book_append_sheet(wb, wsRaw, "Rohdaten");
         XLSX.writeFile(wb, "test-vergleichsbericht.xlsx");
+        showToast('Excel-Bericht erfolgreich exportiert.', 'success');
     } catch (error) {
         console.error("XLSX-Export fehlgeschlagen:", error);
+        showToast("Excel-Export fehlgeschlagen.", 'error');
     } finally {
         setIsExporting(false);
     }
-  }, [comparisonReports, aggregatedReports, isExporting, overallSummary]);
+  }, [comparisonReports, aggregatedReports, isExporting, overallSummary, showToast]);
 
 
   // Admin handlers
   const handleToggleAdminMode = () => setIsAdminMode(prev => !prev);
 
-  const handleAddTestPath = (title: string) => {
+  const handleAddTestPath = useCallback((title: string) => {
     setTestPaths(prev => {
       const newId = Math.max(0, ...prev.map(p => p.id)) + 1;
       const newPath: TestPath = {
@@ -604,13 +634,15 @@ const App: React.FC = () => {
       };
       return [...prev, newPath];
     });
-  };
+    showToast('Neuer Testpfad hinzugefügt.', 'success');
+  }, [showToast]);
 
-  const handleUpdateTestPath = (updatedPath: TestPath) => {
+  const handleUpdateTestPath = useCallback((updatedPath: TestPath) => {
     setTestPaths(prev => prev.map(p => p.id === updatedPath.id ? updatedPath : p));
-  };
+    showToast(`Testpfad '${updatedPath.title}' aktualisiert.`, 'success');
+  }, [showToast]);
   
-  const handleDeleteTestPath = (pathId: number) => {
+  const handleDeleteTestPath = useCallback((pathId: number) => {
     setTestPaths(prev => {
       const newPaths = prev.filter(p => p.id !== pathId);
       if(activePathIndex >= newPaths.length) {
@@ -618,7 +650,8 @@ const App: React.FC = () => {
       }
       return newPaths;
     });
-  };
+    showToast('Testpfad gelöscht.', 'info');
+  }, [activePathIndex, showToast]);
   
   const handleExportAllTestPaths = useCallback(() => {
     const dataStr = JSON.stringify(testPaths, null, 2);
@@ -633,7 +666,8 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [testPaths]);
+    showToast('Alle Testpläne als Backup exportiert.', 'success');
+  }, [testPaths, showToast]);
 
   const handleInitiateImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -643,7 +677,7 @@ const App: React.FC = () => {
     event.target.value = ''; 
   };
 
-  const handleConfirmImport = () => {
+  const handleConfirmImport = useCallback(() => {
     if (!pendingImportFile) return;
 
     const reader = new FileReader();
@@ -664,17 +698,18 @@ const App: React.FC = () => {
                 setTestPaths(pathsToImport);
                 setActivePathIndex(0);
                 setImportUsed(true);
+                showToast('Testpläne erfolgreich importiert und ersetzt.', 'success');
             } else {
-                alert('Ungültiges Dateiformat. Bitte importieren Sie eine gültige JSON-Datei mit einem Testplan-Objekt oder einem Array von Testplänen.');
+                showToast('Ungültiges Dateiformat. Bitte gültige JSON-Datei importieren.', 'error');
             }
         } catch (error) {
-            alert(`Fehler beim Parsen der Datei: ${error}`);
+            showToast(`Fehler beim Parsen der Datei: ${error}`, 'error');
         } finally {
             setPendingImportFile(null);
         }
     };
     reader.readAsText(pendingImportFile);
-  };
+  }, [pendingImportFile, showToast]);
     
   const handleCancelImport = () => {
     setPendingImportFile(null);
@@ -779,7 +814,7 @@ const App: React.FC = () => {
         />
       )}
       {!testerName && (
-        <TesterNameModal onNameSubmit={setTesterName} />
+        <TesterNameModal onNameSubmit={handleNameSubmit} />
       )}
       {pendingNameAssignment.length > 0 && (
           <AssignTesterNameModal
@@ -798,6 +833,19 @@ const App: React.FC = () => {
                 <p className="mt-2 text-yellow-400">Alle aktuellen Testpläne und Fortschritte werden durch den Inhalt dieser Datei unwiderruflich ersetzt.</p>
             </ConfirmationModal>
         )}
+
+      <div aria-live="assertive" className="fixed inset-0 flex items-end px-4 py-6 pointer-events-none sm:p-6 z-[100]">
+        <div className="w-full flex flex-col items-center space-y-2 sm:items-end">
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

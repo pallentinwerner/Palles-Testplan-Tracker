@@ -12,6 +12,7 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
   const [items, setItems] = useState<TestItem[]>(path.items);
   const [newItemDesc, setNewItemDesc] = useState('');
   const modalRef = useRef<HTMLDivElement>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
   // State for drag and drop
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
@@ -38,6 +39,22 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
     setItems(prev => prev.map(item => item.id === itemId ? { ...item, description } : item));
   };
 
+  const handleUpdateItemDetails = (itemId: number, details: string) => {
+    setItems(prev => prev.map(item => item.id === itemId ? { ...item, details } : item));
+  };
+  
+  const toggleDetails = (itemId: number) => {
+    setExpandedItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(itemId)) {
+            newSet.delete(itemId);
+        } else {
+            newSet.add(itemId);
+        }
+        return newSet;
+    });
+  };
+
   const handleAddItem = () => {
     if (newItemDesc.trim()) {
         const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 0;
@@ -45,6 +62,7 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
             id: newId,
             description: newItemDesc.trim(),
             status: TestStatus.NOT_STARTED,
+            details: '',
         };
         setItems(prev => [...prev, newItem]);
         setNewItemDesc('');
@@ -118,13 +136,15 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
             {items.map(item => {
                 const isDragging = draggedItemId === item.id;
                 const isDragOver = dragOverItemId === item.id;
+                const isExpanded = expandedItems.has(item.id);
                 
                 return (
                     <div 
                         key={item.id} 
                         className={`
-                            p-1 flex items-center space-x-2 rounded-lg transition-all duration-200 relative
+                            rounded-lg transition-all duration-200 relative
                             ${isDragging ? 'opacity-30 bg-gray-700' : 'bg-transparent'}
+                            ${isExpanded ? 'bg-gray-800/40' : ''}
                         `}
                         draggable
                         onDragStart={(e) => handleDragStart(e, item.id)}
@@ -133,22 +153,40 @@ const AdminItemsModal: React.FC<AdminItemsModalProps> = ({ path, onClose, onSave
                         onDragEnd={handleDragEnd}
                     >
                         {isDragOver && <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />}
-                        <div className="p-2 cursor-move text-gray-500 hover:text-gray-200" title="Ziehen zum Neuanordnen">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
+                        
+                        <div className="p-1 flex items-center space-x-2">
+                            <div className="p-2 cursor-move text-gray-500 hover:text-gray-200" title="Ziehen zum Neuanordnen">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                value={item.description}
+                                onChange={(e) => handleUpdateItemDesc(item.id, e.target.value)}
+                                className="flex-grow p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-200"
+                            />
+                            <button onClick={() => toggleDetails(item.id)} className="p-2 text-gray-400 hover:bg-gray-600 rounded-full" title={isExpanded ? "Details ausblenden" : "Details bearbeiten"}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                            <button onClick={() => handleDeleteItem(item.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
-                        <input
-                            type="text"
-                            value={item.description}
-                            onChange={(e) => handleUpdateItemDesc(item.id, e.target.value)}
-                            className="flex-grow p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-200"
-                        />
-                        <button onClick={() => handleDeleteItem(item.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                        </button>
+                         {isExpanded && (
+                            <div className="pl-12 pr-12 pb-2">
+                                <textarea
+                                    value={item.details || ''}
+                                    onChange={(e) => handleUpdateItemDetails(item.id, e.target.value)}
+                                    placeholder="Fügen Sie eine detaillierte Beschreibung des Testschritts hinzu..."
+                                    className="w-full h-24 p-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-300 text-sm resize-y"
+                                />
+                            </div>
+                        )}
                     </div>
                 )
             })}
