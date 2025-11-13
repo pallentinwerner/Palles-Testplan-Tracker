@@ -3,9 +3,10 @@ This contains everything you need to run your app locally.
 
 **Prerequisites:**  Node.js
 
-1. Install dependencies:
+Install dependencies:
    `npm install`
-2. Run the app:
+
+Run the app:
    `npm run dev`
 
 or
