@@ -46,8 +46,25 @@ const CommentModal: React.FC<CommentModalProps> = ({ item, onClose, onSave, isFa
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editorRef.current) {
-        editorRef.current.innerHTML = item.comment || '';
+    const editor = editorRef.current;
+    if (editor) {
+        // Set the content
+        editor.innerHTML = item.comment || '';
+        
+        // Focus the editor
+        editor.focus();
+
+        // Move cursor to the end of the content
+        if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+            const range = document.createRange();
+            range.selectNodeContents(editor);
+            range.collapse(false); // Collapse range to the end
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {

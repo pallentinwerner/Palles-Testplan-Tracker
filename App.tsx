@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { TEST_PATHS } from './constants';
 import { TestStatus, TestPath, TestItem, isTestPath, isTestPathArray, migrateImportedData } from './types';
@@ -30,6 +31,46 @@ interface PendingAssignment {
   context: 'main' | 'comparison';
 }
 
+// --- Confirmation Modal Component ---
+interface ConfirmationModalProps {
+  onConfirm: () => void;
+  onCancel: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCancel, title, children }) => {
+  return (
+    <div 
+        className="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+        aria-modal="true"
+        role="dialog"
+    >
+      <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <div className="text-sm text-gray-400 mt-4">{children}</div>
+        </div>
+        <div className="bg-gray-800/50 border-t border-gray-700 px-6 py-4 flex justify-end items-center space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors"
+          >
+            Bestätigen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const App: React.FC = () => {
   const [testPaths, setTestPaths] = useState<TestPath[]>(TEST_PATHS);
   const [activePathIndex, setActivePathIndex] = useState<number>(0);
@@ -40,6 +81,8 @@ const App: React.FC = () => {
   const [comparisonReports, setComparisonReports] = useState<TestPath[]>([]);
   const [pendingNameAssignment, setPendingNameAssignment] = useState<PendingAssignment[]>([]);
   const [pendingFailureStatus, setPendingFailureStatus] = useState<number | null>(null);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [importUsed, setImportUsed] = useState<boolean>(false);
   
   // --- State lifted from ComparisonView ---
   const [selectedForDiff, setSelectedForDiff] = useState<TestPath[]>([]);
@@ -592,10 +635,50 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [testPaths]);
 
-  const handleImportAndReplaceTestPaths = useCallback((newPaths: TestPath[]) => {
-    setTestPaths(newPaths);
-    setActivePathIndex(0);
-  }, []);
+  const handleInitiateImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        setPendingImportFile(file);
+    }
+    event.target.value = ''; 
+  };
+
+  const handleConfirmImport = () => {
+    if (!pendingImportFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const result = e.target?.result as string;
+            const parsed = JSON.parse(result);
+            const migratedData = migrateImportedData(parsed);
+
+            let pathsToImport: TestPath[] | null = null;
+            if (isTestPathArray(migratedData)) {
+                pathsToImport = migratedData;
+            } else if (isTestPath(migratedData)) {
+                pathsToImport = [migratedData];
+            }
+
+            if (pathsToImport) {
+                setTestPaths(pathsToImport);
+                setActivePathIndex(0);
+                setImportUsed(true);
+            } else {
+                alert('Ungültiges Dateiformat. Bitte importieren Sie eine gültige JSON-Datei mit einem Testplan-Objekt oder einem Array von Testplänen.');
+            }
+        } catch (error) {
+            alert(`Fehler beim Parsen der Datei: ${error}`);
+        } finally {
+            setPendingImportFile(null);
+        }
+    };
+    reader.readAsText(pendingImportFile);
+  };
+    
+  const handleCancelImport = () => {
+    setPendingImportFile(null);
+  };
 
   const renderContent = () => {
     if (isAdminMode) {
@@ -605,9 +688,7 @@ const App: React.FC = () => {
           onAddPath={handleAddTestPath}
           onUpdatePath={handleUpdateTestPath}
           onDeletePath={handleDeleteTestPath}
-          onClose={handleToggleAdminMode}
           onExportAll={handleExportAllTestPaths}
-          onImportAndReplace={handleImportAndReplaceTestPaths}
         />
       );
     }
@@ -638,7 +719,11 @@ const App: React.FC = () => {
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4">{activePath?.title || 'Kein Testplan ausgewählt'}</h2>
               {activePath && (
                 <>
-                  <SummaryView items={activePath.items} onExport={handleExportToJSON} />
+                  <SummaryView 
+                    items={activePath.items} 
+                    onExport={handleExportToJSON}
+                    pathTitle={activePath.title}
+                  />
                   <div className="mt-8">
                     <TestPlanView
                       // FIX: Corrected typo from active-Path.items to activePath.items
@@ -668,6 +753,8 @@ const App: React.FC = () => {
         onToggleAdmin={handleToggleAdminMode} 
         isAdminMode={isAdminMode} 
         onImportForComparison={handleImportForComparison}
+        onInitiateImport={handleInitiateImport}
+        isImportDisabled={importUsed}
         // --- Props for comparison mode actions ---
         isComparisonMode={isComparisonMode}
         onCloseComparison={handleCloseComparison}
@@ -701,6 +788,16 @@ const App: React.FC = () => {
             onCancel={() => setPendingNameAssignment([])}
           />
       )}
+       {pendingImportFile && (
+            <ConfirmationModal
+                title="Import bestätigen"
+                onConfirm={handleConfirmImport}
+                onCancel={handleCancelImport}
+            >
+                <p>Sind Sie sicher, dass Sie die Datei <strong className="text-gray-200">{pendingImportFile.name}</strong> importieren möchten?</p>
+                <p className="mt-2 text-yellow-400">Alle aktuellen Testpläne und Fortschritte werden durch den Inhalt dieser Datei unwiderruflich ersetzt.</p>
+            </ConfirmationModal>
+        )}
     </div>
   );
 };

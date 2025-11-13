@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { TestItem, TestStatus } from '../types';
 import AnimatedNumber from './AnimatedNumber';
@@ -6,9 +7,10 @@ import AnimatedNumber from './AnimatedNumber';
 interface SummaryViewProps {
   items: TestItem[];
   onExport: () => void;
+  pathTitle: string;
 }
 
-const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport }) => {
+const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport, pathTitle }) => {
   const summary = useMemo(() => {
     const total = items.length;
     if (total === 0) {
@@ -47,7 +49,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport }) => {
       alert(message);
     }
   };
-
+  
 
   return (
     <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
@@ -60,13 +62,13 @@ const SummaryView: React.FC<SummaryViewProps> = ({ items, onExport }) => {
             <button
               onClick={handleExportClick}
               disabled={!summary.isComplete}
-              title={!summary.isComplete ? `${summary.openTests} Test(s) noch offen` : 'Als JSON exportieren'}
+              title={!summary.isComplete ? `${summary.openTests} Test(s) noch offen` : `Testergebnis zu ${pathTitle} exportieren`}
               className="inline-flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              <span>Als JSON exportieren</span>
+              <span>{`Testergebnis zu ${pathTitle} exportieren`}</span>
             </button>
         </div>
       </div>

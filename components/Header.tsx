@@ -6,6 +6,8 @@ interface HeaderProps {
     onToggleAdmin: () => void;
     isAdminMode: boolean;
     onImportForComparison: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onInitiateImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    isImportDisabled: boolean;
     // --- New props for comparison mode ---
     isComparisonMode: boolean;
     onCloseComparison: () => void;
@@ -21,6 +23,8 @@ const Header: React.FC<HeaderProps> = ({
     onToggleAdmin, 
     isAdminMode, 
     onImportForComparison,
+    onInitiateImport,
+    isImportDisabled,
     isComparisonMode,
     onCloseComparison,
     isExporting,
@@ -31,9 +35,14 @@ const Header: React.FC<HeaderProps> = ({
     onExportXLSX
 }) => {
   const comparisonImportRef = useRef<HTMLInputElement>(null);
+  const mainImportRef = useRef<HTMLInputElement>(null);
 
   const handleComparisonClick = () => {
     comparisonImportRef.current?.click();
+  };
+  
+  const handleMainImportClick = () => {
+    mainImportRef.current?.click();
   };
 
   return (
@@ -74,6 +83,23 @@ const Header: React.FC<HeaderProps> = ({
                     </>
                  ) : (
                     <>
+                        <input 
+                            type="file" 
+                            ref={mainImportRef}
+                            onChange={onInitiateImport}
+                            accept=".json,application/json"
+                            className="hidden"
+                        />
+                         <button
+                            onClick={handleMainImportClick}
+                            disabled={isImportDisabled}
+                            title="Testplan importieren"
+                            className="p-2 rounded-full transition-colors duration-200 text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                        </button>
                         <input 
                             type="file" 
                             ref={comparisonImportRef}
