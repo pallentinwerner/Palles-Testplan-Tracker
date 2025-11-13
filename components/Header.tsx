@@ -9,8 +9,6 @@ interface HeaderProps {
     // --- New props for comparison mode ---
     isComparisonMode: boolean;
     onCloseComparison: () => void;
-    selectedForDiff: TestPath[];
-    onStartDiffing: () => void;
     isExporting: boolean;
     showExportDropdown: boolean;
     setShowExportDropdown: (show: boolean) => void;
@@ -25,8 +23,6 @@ const Header: React.FC<HeaderProps> = ({
     onImportForComparison,
     isComparisonMode,
     onCloseComparison,
-    selectedForDiff,
-    onStartDiffing,
     isExporting,
     showExportDropdown,
     setShowExportDropdown,
@@ -55,14 +51,6 @@ const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-2">
                  {isComparisonMode ? (
                     <>
-                        {selectedForDiff.length >= 2 && (
-                          <button
-                            onClick={onStartDiffing}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors animate-pulse"
-                            >
-                            Vergleichen ({selectedForDiff.length})
-                          </button>
-                        )}
                          <div className="relative">
                             <button 
                                 onClick={() => setShowExportDropdown(!showExportDropdown)}

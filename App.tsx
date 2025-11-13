@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { TEST_PATHS } from './constants';
 import { TestStatus, TestPath, TestItem, isTestPath, isTestPathArray, migrateImportedData } from './types';
@@ -651,8 +650,6 @@ const App: React.FC = () => {
         // --- Props for comparison mode actions ---
         isComparisonMode={isComparisonMode}
         onCloseComparison={handleCloseComparison}
-        selectedForDiff={selectedForDiff}
-        onStartDiffing={() => setIsDiffing(true)}
         isExporting={isExporting}
         showExportDropdown={showExportDropdown}
         setShowExportDropdown={setShowExportDropdown}
